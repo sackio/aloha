@@ -1,0 +1,23 @@
+# Standalone mode: bring your own Home Assistant instance.
+# Aloha connects to an external HA via HA_URL + HA_TOKEN.
+#
+# For bundled mode (HA + Aloha in a single container), run:
+#   docker run -d \
+#     -v aloha-data:/data \
+#     -p 8123:8123 -p 7123:7123 \
+#     ghcr.io/aloha-ha/aloha:latest
+
+services:
+  aloha:
+    image: ghcr.io/aloha-ha/aloha:latest
+    environment:
+      ALOHA_MODE: standalone
+      HA_URL: "http://homeassistant.local:8123"
+      HA_TOKEN: ""
+    ports:
+      - "7123:7123"
+    volumes:
+      - aloha-data:/data
+
+volumes:
+  aloha-data:

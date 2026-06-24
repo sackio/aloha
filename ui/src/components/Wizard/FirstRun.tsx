@@ -1,0 +1,270 @@
+/**
+ * FirstRun.tsx
+ *
+ * Main first-run wizard shell. Drives a state machine through setup steps:
+ *   loading -> picker -> oauth | key_wizard | ollama -> complete
+ *
+ * On mount: GET /health.
+ *   - setup_complete=true  -> redirect to main chat (replace history)
+ *   - ha_connected=false   -> show HA startup loading screen, poll /health every 2s
+ *   - otherwise            -> show provider picker
+ */
+
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { getHealth, HealthResponse } from "../../api/client";
+import { ProviderPicker } from "./ProviderPicker";
+import { OAuthFlow } from "./OAuthFlow";
+import { KeyWizard } from "./KeyWizard";
+import { OllamaSetup } from "./OllamaSetup";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type WizardStep = "loading" | "picker" | "oauth" | "key_wizard" | "ollama" | "complete";
+
+export interface ProviderConfig {
+  id: "anthropic" | "openai" | "gemini" | "ollama" | "custom";
+  name: string;
+  emoji: string;
+  tagline: string;
+  authBadge: "oauth" | "key" | "local";
+  requires_api_key: boolean;
+  models: string[];
+  default_model: string;
+  // Steps shown in KeyWizard for API-key providers
+  steps: Array<{
+    title: string;
+    instruction: string;
+    url?: string;
+  }>;
+}
+
+// ---------------------------------------------------------------------------
+// HA startup loading screen
+// ---------------------------------------------------------------------------
+
+function HAStartupScreen() {
+  const [dots, setDots] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setDots((d) => (d + 1) % 4), 500);
+    return () => clearInterval(id);
+  }, []);
+
+  const dotStr = ".".repeat(dots);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-slate-100 gap-8">
+      {/* Animated pulse icon */}
+      <div className="relative">
+        <div className="w-20 h-20 rounded-full bg-sky-500/20 flex items-center justify-center animate-pulse">
+          <div className="w-12 h-12 rounded-full bg-sky-500/40 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-sky-500" />
+          </div>
+        </div>
+        {/* Ripple rings */}
+        <div className="absolute inset-0 rounded-full border-2 border-sky-500/30 animate-ping" />
+      </div>
+
+      <div className="text-center space-y-2">
+        <p className="text-xl font-semibold text-slate-100">
+          Home Assistant is starting{dotStr}
+        </p>
+        <p className="text-sm text-slate-400">
+          This may take a minute on first boot
+        </p>
+      </div>
+
+      {/* Progress bar (indeterminate) */}
+      <div className="w-64 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-sky-500 rounded-full animate-[slide_1.5s_ease-in-out_infinite]"
+          style={{
+            width: "40%",
+            animation: "slideBar 1.5s ease-in-out infinite",
+          }}
+        />
+      </div>
+
+      <style>{`
+        @keyframes slideBar {
+          0%   { transform: translateX(-150%); }
+          100% { transform: translateX(400%); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main wizard shell
+// ---------------------------------------------------------------------------
+
+export function FirstRun() {
+  const [step, setStep] = useState<WizardStep>("loading");
+  const [selectedProvider, setSelectedProvider] = useState<ProviderConfig | null>(null);
+  const [useKey, setUseKey] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPoll = useCallback(() => {
+    if (pollRef.current !== null) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
+
+  // On mount: check health once
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkHealth() {
+      let health: HealthResponse;
+      try {
+        health = await getHealth();
+      } catch {
+        // Backend not reachable yet — treat as HA starting
+        if (!cancelled) setStep("loading");
+        return;
+      }
+
+      if (cancelled) return;
+
+      if (health.setup_complete) {
+        // Redirect to main app — replace history so Back doesn't loop
+        window.location.replace("/");
+        return;
+      }
+
+      if (!health.ha_connected) {
+        setStep("loading");
+        startHAPoller();
+        return;
+      }
+
+      setStep("picker");
+    }
+
+    checkHealth();
+
+    return () => {
+      cancelled = true;
+      stopPoll();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function startHAPoller() {
+    stopPoll();
+    pollRef.current = setInterval(async () => {
+      try {
+        const health = await getHealth();
+        if (health.setup_complete) {
+          stopPoll();
+          window.location.replace("/");
+          return;
+        }
+        if (health.ha_connected) {
+          stopPoll();
+          setStep("picker");
+        }
+      } catch {
+        // Keep polling
+      }
+    }, 2000);
+  }
+
+  // Clean up poller on unmount
+  useEffect(() => () => stopPoll(), [stopPoll]);
+
+  // ---------------------------------------------------------------------------
+  // Provider selected callback from ProviderPicker
+  // ---------------------------------------------------------------------------
+
+  function handleProviderSelect(provider: ProviderConfig, forceKey = false) {
+    setSelectedProvider(provider);
+    setUseKey(forceKey);
+
+    if (provider.id === "ollama") {
+      setStep("ollama");
+    } else if (forceKey || provider.authBadge !== "oauth") {
+      setStep("key_wizard");
+    } else {
+      setStep("oauth");
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Success
+  // ---------------------------------------------------------------------------
+
+  function handleSuccess() {
+    setStep("complete");
+    // Redirect after brief delay so user sees the success state
+    setTimeout(() => window.location.replace("/"), 800);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
+  if (step === "loading") {
+    return <HAStartupScreen />;
+  }
+
+  if (step === "complete") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-slate-100 gap-4">
+        <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+          <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <p className="text-lg font-semibold">Setup complete — launching Aloha</p>
+      </div>
+    );
+  }
+
+  if (step === "picker") {
+    return (
+      <ProviderPicker
+        onSelect={(provider, forceKey) => handleProviderSelect(provider, forceKey)}
+      />
+    );
+  }
+
+  if (step === "oauth" && selectedProvider) {
+    return (
+      <OAuthFlow
+        provider={selectedProvider}
+        onSuccess={handleSuccess}
+        onBack={() => setStep("picker")}
+        onUseKey={() => {
+          setUseKey(true);
+          setStep("key_wizard");
+        }}
+      />
+    );
+  }
+
+  if (step === "key_wizard" && selectedProvider) {
+    return (
+      <KeyWizard
+        provider={selectedProvider}
+        onSuccess={handleSuccess}
+        onBack={() => setStep("picker")}
+      />
+    );
+  }
+
+  if (step === "ollama") {
+    return (
+      <OllamaSetup
+        onSuccess={handleSuccess}
+        onBack={() => setStep("picker")}
+      />
+    );
+  }
+
+  return null;
+}

@@ -1,0 +1,30 @@
+name: Aloha
+description: AI agent for Home Assistant — chat with Claude, GPT, Gemini, or Ollama to build your smart home
+version: "0.1.0"
+slug: aloha
+init: false
+homeassistant_api: true
+ingress: true
+ingress_port: 7123
+panel_icon: mdi:robot-love
+panel_title: Aloha
+map:
+  - config:rw
+  - data:rw
+ports:
+  7123/tcp: 7123
+options:
+  ai_provider: claude
+  model: auto
+  safety_mode: supervised
+  context_refresh_minutes: 5
+schema:
+  ai_provider: list(claude|openai|gemini|ollama|openrouter|groq|custom)
+  model: str
+  safety_mode: list(supervised|autonomous)
+  context_refresh_minutes: int(1,60)
+image: "ghcr.io/aloha-ha/aloha-addon:{arch}"
+arch:
+  - amd64
+  - aarch64
+  - armv7
