@@ -15,8 +15,8 @@ from __future__ import annotations
 from aloha.backends.openai_backend import OpenAIBackend
 
 _OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-_HTTP_REFERER = "https://github.com/aloha-ha/aloha"
-_X_TITLE = "Aloha — Home Assistant AI Agent"
+_HTTP_REFERER = "https://github.com/sackio/aloha"
+_X_TITLE = "Aloha - Home Assistant AI Agent"
 
 
 class OpenRouterBackend(OpenAIBackend):

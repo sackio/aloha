@@ -105,6 +105,17 @@ class OpenAIBackend(BaseBackend):
                         "content": content,
                     }
                 )
+            elif role == "assistant" and msg.get("tool_calls"):
+                # Preserve tool_calls so the provider can link the following
+                # tool-result messages back to this assistant turn. Content may
+                # be None for tool-calls-only turns (required by Anthropic et al.).
+                openai_messages.append(
+                    {
+                        "role": "assistant",
+                        "content": content or None,
+                        "tool_calls": msg["tool_calls"],
+                    }
+                )
             else:
                 openai_messages.append({"role": role, "content": content})
 

@@ -229,7 +229,10 @@ class AgentLoop:
                 # backends that need them in message history)
                 assistant_msg: dict[str, Any] = {
                     "role": "assistant",
-                    "content": assistant_content,
+                    # Use None (not "") when the turn was tool-calls-only: an empty
+                    # assistant text block is rejected by Anthropic/others as an
+                    # "assistant message prefill" and breaks multi-step tool flows.
+                    "content": assistant_content or None,
                     "tool_calls": [
                         {
                             "id": tc["id"],
@@ -305,7 +308,7 @@ class AgentLoop:
         args = tc.get("args") or {}
 
         try:
-            result = await execute_tool(name, args, ha_client)
+            result = await execute_tool(name, args, ha_client, self._config.ha_config_dir)
         except Exception as exc:
             log.warning("Tool %r raised: %s", name, exc)
             return f"Error: {exc}"
@@ -314,8 +317,16 @@ class AgentLoop:
         if isinstance(result, dict) and result.get("type") == "diff":
             diff_event = DiffEvent(**result)
             diff_id = diff_event.id
-            path = diff_event.path
             content = diff_event.content
+
+            # Anchor relative paths (write tools emit paths like
+            # "automations/foo.yaml") to the HA config dir, so files land in the
+            # HA config — not the process CWD. Update the event before emitting
+            # so the frontend and the write agree on the absolute path.
+            path = diff_event.path
+            if not os.path.isabs(path):
+                path = os.path.join(str(self._config.ha_config_dir), path)
+                diff_event.path = path
 
             # Emit the diff event so the frontend can display it
             await queue.put(diff_event.model_dump())

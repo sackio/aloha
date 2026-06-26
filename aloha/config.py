@@ -36,7 +36,7 @@ class AlohaConfig(BaseSettings):
     )
 
     # AI provider
-    ai_provider: Literal["anthropic", "openai", "gemini", "ollama", "custom"] = "anthropic"
+    ai_provider: Literal["anthropic", "openai", "gemini", "ollama", "openrouter", "groq", "custom"] = "anthropic"
     model: str = "auto"
     safety_mode: Literal["strict", "normal", "permissive"] = "normal"
 
