@@ -155,6 +155,18 @@ class AlohaConfig(BaseSettings):
             instance._api_key_enc = api_key_enc
             instance._ha_token_enc = ha_token_enc
 
+        # Credentials are encrypted *properties*, not pydantic fields, so they
+        # are never populated by the env-var overlay above. Apply them here via
+        # the encrypting setters. This is how the HAOS add-on injects the
+        # Supervisor token (run.sh sets ALOHA_HA_TOKEN=${SUPERVISOR_TOKEN}), and
+        # how ALOHA_API_KEY works for headless/standalone deployments. Env wins.
+        env_api_key = os.environ.get("ALOHA_API_KEY")
+        if env_api_key:
+            instance.api_key = env_api_key
+        env_ha_token = os.environ.get("ALOHA_HA_TOKEN")
+        if env_ha_token:
+            instance.ha_token = env_ha_token
+
         return instance
 
     def save(self) -> None:
