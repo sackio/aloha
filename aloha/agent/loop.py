@@ -43,6 +43,7 @@ from aloha.agent.types import (
 )
 from aloha.config import AlohaConfig
 from aloha.ha.client import get_ha_client
+from aloha.mcp.client import get_mcp_manager
 from aloha.mcp.registry import ALL_TOOLS, execute_tool
 
 log = logging.getLogger(__name__)
@@ -189,12 +190,16 @@ class AgentLoop:
             system = _build_system_prompt(self._config)
             ha_client = get_ha_client()
 
+            # Built-in HA tools + any external MCP-server tools.
+            mcp_manager = get_mcp_manager()
+            tools = ALL_TOOLS + (mcp_manager.tools() if mcp_manager else [])
+
             while True:
                 # Collect full response from the backend stream
                 content_parts: list[str] = []
                 tool_calls: list[dict[str, Any]] = []
 
-                async for chunk in self._backend.chat_stream(messages, system, ALL_TOOLS):
+                async for chunk in self._backend.chat_stream(messages, system, tools):
                     ctype = chunk.get("type")
 
                     if ctype == "content":
@@ -306,6 +311,15 @@ class AgentLoop:
         """
         name = tc.get("name", "")
         args = tc.get("args") or {}
+
+        # Route external MCP-server tools to the MCP client manager.
+        mcp_manager = get_mcp_manager()
+        if mcp_manager is not None and mcp_manager.owns(name):
+            try:
+                return await mcp_manager.call_tool(name, args)
+            except Exception as exc:
+                log.warning("MCP tool %r raised: %s", name, exc)
+                return f"Error: {exc}"
 
         try:
             result = await execute_tool(name, args, ha_client, self._config.ha_config_dir)

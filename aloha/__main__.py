@@ -92,6 +92,17 @@ async def main() -> None:
         log.warning("Context engine not started — HA client unavailable.")
 
     # -----------------------------------------------------------------------
+    # 3b. Initialise and start the external MCP client manager (best-effort)
+    # -----------------------------------------------------------------------
+    from aloha.mcp.client import init_mcp_manager
+
+    mcp_manager = init_mcp_manager(config.data_dir)
+    try:
+        await mcp_manager.start()
+    except Exception:
+        log.warning("MCP client manager failed to start", exc_info=True)
+
+    # -----------------------------------------------------------------------
     # 4. Create FastAPI app
     # -----------------------------------------------------------------------
     from aloha.app import create_app
@@ -128,6 +139,11 @@ async def main() -> None:
         if ha_client is not None:
             await ha_client.close()
             log.info("HA client closed.")
+
+        try:
+            await mcp_manager.stop()
+        except Exception:
+            log.debug("Error stopping MCP client manager", exc_info=True)
 
         log.info("Aloha shut down cleanly.")
 
