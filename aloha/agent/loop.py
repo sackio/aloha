@@ -386,6 +386,15 @@ def _build_system_prompt(config: AlohaConfig) -> str:
         "Never store or reveal credentials."
     )
 
+    # Append the skill index so the agent knows which playbooks it can pull.
+    try:
+        from aloha.skills import load_skills, render_skill_index
+        index = render_skill_index(load_skills(config.data_dir))
+        if index:
+            base = f"{base}\n\n--- Skills ---\n{index}"
+    except Exception:
+        log.debug("Could not build skill index", exc_info=True)
+
     # Append HA context if available
     try:
         from aloha.context.engine import get_context_engine

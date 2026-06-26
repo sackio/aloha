@@ -48,6 +48,11 @@ from aloha.mcp.tools.system import (
     TOOL_NAMES as SYSTEM_TOOL_NAMES,
     execute_system_tool,
 )
+from aloha.mcp.tools.skills import (
+    TOOLS as SKILL_TOOLS,
+    TOOL_NAMES as SKILL_TOOL_NAMES,
+    execute_skills_tool,
+)
 
 # ---------------------------------------------------------------------------
 # Aggregate all tools
@@ -60,6 +65,7 @@ ALL_TOOLS: list[ToolDef] = [
     *SYSTEM_TOOLS,
     *DASHBOARD_TOOLS,
     *HACS_TOOLS,
+    *SKILL_TOOLS,
 ]
 
 TOOL_MAP: dict[str, ToolDef] = {tool.name: tool for tool in ALL_TOOLS}
@@ -131,6 +137,9 @@ async def execute_tool(
 
     if name in HACS_TOOL_NAMES:
         return await execute_hacs_tool(name, args, ha_client)
+
+    if name in SKILL_TOOL_NAMES:
+        return await execute_skills_tool(name, args)
 
     # Should never reach here given the TOOL_MAP check above, but be defensive.
     raise ValueError(f"Tool '{name}' is registered but has no dispatcher.")
