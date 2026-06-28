@@ -32,8 +32,8 @@ PROVIDERS = [
         "id": "anthropic",
         "name": "Anthropic",
         "requires_api_key": True,
-        "models": ["claude-opus-4-5", "claude-sonnet-4-5", "claude-haiku-3-5"],
-        "default_model": "claude-opus-4-5",
+        "models": ["claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5"],
+        "default_model": "claude-sonnet-4-6",
         "wizard_steps": [
             {
                 "step": 1,
@@ -74,8 +74,8 @@ PROVIDERS = [
         "id": "openai",
         "name": "OpenAI",
         "requires_api_key": True,
-        "models": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"],
-        "default_model": "gpt-4o",
+        "models": ["gpt-5.1", "gpt-5", "gpt-4.1", "gpt-4o-mini"],
+        "default_model": "gpt-5.1",
         "wizard_steps": [
             {
                 "step": 1,
@@ -116,8 +116,8 @@ PROVIDERS = [
         "id": "gemini",
         "name": "Google Gemini",
         "requires_api_key": True,
-        "models": ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"],
-        "default_model": "gemini-2.0-flash",
+        "models": ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash"],
+        "default_model": "gemini-2.5-flash",
         "wizard_steps": [
             {
                 "step": 1,
@@ -151,8 +151,14 @@ PROVIDERS = [
         "id": "openrouter",
         "name": "OpenRouter",
         "requires_api_key": True,
-        "models": ["anthropic/claude-opus-4-5", "openai/gpt-4o", "google/gemini-2.0-flash"],
-        "default_model": "anthropic/claude-opus-4-5",
+        "models": [
+            "anthropic/claude-sonnet-4.6",
+            "anthropic/claude-opus-4.8",
+            "openai/gpt-5.1",
+            "google/gemini-2.5-pro",
+            "anthropic/claude-haiku-4.5",
+        ],
+        "default_model": "anthropic/claude-sonnet-4.6",
         "wizard_steps": [
             {
                 "step": 1,

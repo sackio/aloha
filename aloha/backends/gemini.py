@@ -181,11 +181,11 @@ class GeminiBackend(BaseBackend):
 
     @property
     def default_model(self) -> str:
-        return "gemini-2.0-flash"
+        return "gemini-2.5-flash"
 
     @property
     def available_models(self) -> list[str]:
-        return ["gemini-2.0-flash", "gemini-2.5-pro"]
+        return ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash"]
 
     # ------------------------------------------------------------------
     # chat_stream

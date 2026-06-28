@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from pathlib import Path
 from typing import Any
 
 import yaml
@@ -233,10 +234,36 @@ def _diff_event(
 # ---------------------------------------------------------------------------
 
 
+def _load_automations_file(ha_config_dir: Path) -> tuple[Path, str, list]:
+    """
+    Return (path, raw_text, parsed_list) for the HA automations.yaml file.
+
+    Stock Home Assistant uses a single ``automations.yaml`` (a YAML list)
+    included via ``automation: !include automations.yaml``. We read/modify that
+    list so created automations actually load, rather than writing split files
+    that the default config never includes.
+    """
+    path = Path(ha_config_dir) / "automations.yaml"
+    raw = ""
+    parsed: list = []
+    if path.exists():
+        raw = path.read_text(encoding="utf-8")
+        try:
+            loaded = yaml.safe_load(raw)
+            if isinstance(loaded, list):
+                parsed = loaded
+            elif isinstance(loaded, dict):
+                parsed = [loaded]
+        except yaml.YAMLError:
+            parsed = []
+    return path, raw, parsed
+
+
 async def execute_automations_tool(
     name: str,
     args: dict[str, Any],
     ha_client: HAClient,
+    ha_config_dir: Path,
 ) -> Any:
     """Route to the correct automation tool implementation."""
 
@@ -362,22 +389,27 @@ async def execute_automations_tool(
             parsed = yaml.safe_load(config_yaml)
         except yaml.YAMLError as exc:
             return f"YAML syntax error — automation not created: {exc}"
+        if not isinstance(parsed, dict):
+            return "Automation config must be a single YAML mapping (alias / trigger / action)."
 
-        # Generate a slug-style id from alias
+        # Ensure a stable id + alias.
         auto_id = alias.lower().replace(" ", "_").replace("-", "_")
-        # Ensure id is in the parsed config
-        if isinstance(parsed, dict) and "id" not in parsed:
-            parsed["id"] = auto_id
-            config_yaml = yaml.dump(parsed, default_flow_style=False, allow_unicode=True)
+        parsed.setdefault("id", auto_id)
+        parsed.setdefault("alias", alias)
 
+        # Merge into the real automations.yaml list (stock HA include target),
+        # so the new automation actually loads. Replace same-id, else append.
+        path, before, automations = _load_automations_file(ha_config_dir)
+        for i, a in enumerate(automations):
+            if isinstance(a, dict) and str(a.get("id")) == str(parsed["id"]):
+                automations[i] = parsed
+                break
+        else:
+            automations.append(parsed)
+
+        after = yaml.dump(automations, default_flow_style=False, allow_unicode=True, sort_keys=False)
         diff_id = f"diff_{uuid.uuid4().hex[:12]}"
-        path = f"automations/{auto_id}.yaml"
-        return _diff_event(
-            diff_id=diff_id,
-            path=path,
-            before="",
-            after=config_yaml,
-        )
+        return _diff_event(diff_id=diff_id, path=str(path), before=before, after=after)
 
     if name == "update_automation":
         automation_id = args["automation_id"]
@@ -385,29 +417,27 @@ async def execute_automations_tool(
 
         # Validate YAML first
         try:
-            yaml.safe_load(config_yaml)
+            parsed = yaml.safe_load(config_yaml)
         except yaml.YAMLError as exc:
             return f"YAML syntax error — automation not updated: {exc}"
+        if not isinstance(parsed, dict):
+            return "Automation config must be a single YAML mapping."
 
-        # Get existing config as "before"
-        before = ""
-        uid = automation_id.removeprefix("automation.")
-        try:
-            client = await ha_client._get_client()
-            r = await client.get(f"/api/config/automation/config/{uid}")
-            if r.status_code == 200:
-                before = yaml.dump(r.json(), default_flow_style=False, allow_unicode=True)
-        except Exception:
-            pass
+        uid = str(automation_id).removeprefix("automation.")
+        parsed.setdefault("id", uid)
 
+        # Replace the matching entry in automations.yaml (append if not found).
+        path, before, automations = _load_automations_file(ha_config_dir)
+        for i, a in enumerate(automations):
+            if isinstance(a, dict) and str(a.get("id")) == uid:
+                automations[i] = parsed
+                break
+        else:
+            automations.append(parsed)
+
+        after = yaml.dump(automations, default_flow_style=False, allow_unicode=True, sort_keys=False)
         diff_id = f"diff_{uuid.uuid4().hex[:12]}"
-        path = f"automations/{uid}.yaml"
-        return _diff_event(
-            diff_id=diff_id,
-            path=path,
-            before=before,
-            after=config_yaml,
-        )
+        return _diff_event(diff_id=diff_id, path=str(path), before=before, after=after)
 
     # --- DESTRUCTIVE tools ---
 

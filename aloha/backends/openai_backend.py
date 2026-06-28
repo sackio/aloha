@@ -69,11 +69,11 @@ class OpenAIBackend(BaseBackend):
 
     @property
     def default_model(self) -> str:
-        return "gpt-4o"
+        return "gpt-5.1"
 
     @property
     def available_models(self) -> list[str]:
-        return ["gpt-4o", "gpt-4o-mini", "o3", "o4-mini"]
+        return ["gpt-5.1", "gpt-5", "gpt-4.1", "gpt-4o-mini"]
 
     # ------------------------------------------------------------------
     # chat_stream

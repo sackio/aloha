@@ -48,19 +48,19 @@ class OpenRouterBackend(OpenAIBackend):
 
     @property
     def default_model(self) -> str:
-        return "auto"
+        # A strong, tool-capable default (OpenRouter slugs use dots, e.g. 4.6).
+        return "anthropic/claude-sonnet-4.6"
 
     @property
     def available_models(self) -> list[str]:
-        # OpenRouter exposes hundreds of models; return common ones.
-        # The "auto" special value lets OpenRouter pick the best model.
+        # OpenRouter exposes hundreds of models; return common tool-capable ones.
         return [
-            "auto",
-            "anthropic/claude-sonnet-4-6",
-            "anthropic/claude-opus-4-8",
-            "openai/gpt-4o",
-            "openai/gpt-4o-mini",
-            "google/gemini-2.0-flash",
-            "meta-llama/llama-3.1-70b-instruct",
-            "mistralai/mixtral-8x7b-instruct",
+            "anthropic/claude-sonnet-4.6",
+            "anthropic/claude-opus-4.8",
+            "anthropic/claude-haiku-4.5",
+            "openai/gpt-5.1",
+            "openai/gpt-4.1",
+            "google/gemini-2.5-pro",
+            "google/gemini-2.5-flash",
+            "meta-llama/llama-3.3-70b-instruct",
         ]

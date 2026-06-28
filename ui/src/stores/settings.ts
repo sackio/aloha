@@ -4,7 +4,7 @@ import { create } from "zustand";
 // Types
 // ---------------------------------------------------------------------------
 
-export type Provider = "anthropic" | "openai" | "gemini" | "ollama" | "custom";
+export type Provider = "anthropic" | "openai" | "gemini" | "ollama" | "openrouter" | "groq" | "custom";
 export type SafetyMode = "strict" | "normal" | "permissive";
 export type RuntimeMode = "bundled" | "standalone" | "addon";
 

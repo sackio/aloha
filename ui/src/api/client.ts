@@ -27,7 +27,7 @@ export interface HealthResponse {
 }
 
 export interface SettingsData {
-  ai_provider: "anthropic" | "openai" | "gemini" | "ollama" | "custom";
+  ai_provider: "anthropic" | "openai" | "gemini" | "ollama" | "openrouter" | "groq" | "custom";
   model: string;
   safety_mode: "strict" | "normal" | "permissive";
   ha_url: string;

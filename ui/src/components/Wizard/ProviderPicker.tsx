@@ -16,14 +16,48 @@ import { ProviderConfig } from "./FirstRun";
 
 export const PROVIDERS: ProviderConfig[] = [
   {
+    id: "openrouter",
+    name: "OpenRouter",
+    emoji: "🌐",
+    tagline: "Recommended — one key, every model",
+    authBadge: "key",
+    recommended: true,
+    requires_api_key: true,
+    models: [
+      "anthropic/claude-sonnet-4.6",
+      "anthropic/claude-opus-4.8",
+      "openai/gpt-5.1",
+      "google/gemini-2.5-pro",
+      "anthropic/claude-haiku-4.5",
+    ],
+    default_model: "anthropic/claude-sonnet-4.6",
+    steps: [
+      {
+        title: "Create an OpenRouter account",
+        instruction: "Sign up free at openrouter.ai — one account, access to Claude, GPT, Gemini and more.",
+        url: "https://openrouter.ai/",
+      },
+      {
+        title: "Generate an API key",
+        instruction:
+          'Go to Keys and click "Create Key", then add a few dollars of credit to enable paid models.',
+        url: "https://openrouter.ai/keys",
+      },
+      {
+        title: "Enter your API key",
+        instruction: "Paste the key below. It starts with sk-or-.",
+      },
+    ],
+  },
+  {
     id: "anthropic",
     name: "Claude",
     emoji: "🤖",
-    tagline: "Best for smart home tasks",
+    tagline: "Best reasoning, direct from Anthropic",
     authBadge: "key",
     requires_api_key: true,
-    models: ["claude-opus-4-5", "claude-sonnet-4-5", "claude-haiku-3-5"],
-    default_model: "claude-opus-4-5",
+    models: ["claude-sonnet-4-6", "claude-opus-4-8", "claude-haiku-4-5"],
+    default_model: "claude-sonnet-4-6",
     steps: [
       {
         title: "Create an Anthropic account",
@@ -46,11 +80,11 @@ export const PROVIDERS: ProviderConfig[] = [
     id: "openai",
     name: "OpenAI",
     emoji: "✨",
-    tagline: "GPT-4o — industry standard",
+    tagline: "GPT-5.1 — industry standard",
     authBadge: "key",
     requires_api_key: true,
-    models: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"],
-    default_model: "gpt-4o",
+    models: ["gpt-5.1", "gpt-5", "gpt-4.1", "gpt-4o-mini"],
+    default_model: "gpt-5.1",
     steps: [
       {
         title: "Create an OpenAI account",
@@ -75,8 +109,8 @@ export const PROVIDERS: ProviderConfig[] = [
     tagline: "Free tier available",
     authBadge: "key",
     requires_api_key: true,
-    models: ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"],
-    default_model: "gemini-2.0-flash",
+    models: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash"],
+    default_model: "gemini-2.5-flash",
     steps: [
       {
         title: "Open Google AI Studio",
@@ -112,6 +146,32 @@ export const PROVIDERS: ProviderConfig[] = [
     ],
     default_model: "llama3.3",
     steps: [],
+  },
+  {
+    id: "groq",
+    name: "Groq",
+    emoji: "⚡",
+    tagline: "Blazing-fast, free tier",
+    authBadge: "key",
+    requires_api_key: true,
+    models: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"],
+    default_model: "llama-3.3-70b-versatile",
+    steps: [
+      {
+        title: "Create a Groq account",
+        instruction: "Sign up free at console.groq.com.",
+        url: "https://console.groq.com/",
+      },
+      {
+        title: "Create an API key",
+        instruction: 'Go to API Keys and click "Create API Key".',
+        url: "https://console.groq.com/keys",
+      },
+      {
+        title: "Enter your API key",
+        instruction: "Paste the key below.",
+      },
+    ],
   },
   {
     id: "custom",
@@ -174,14 +234,19 @@ function ProviderCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={`
-        flex flex-col items-start gap-3 p-5 rounded-xl text-left
+        relative flex flex-col items-start gap-3 p-5 rounded-xl text-left
         bg-slate-800 border transition-all duration-150 cursor-pointer
-        ${hovered
+        ${hovered || provider.recommended
           ? "border-sky-500 shadow-[0_0_0_2px_rgba(14,165,233,0.25)]"
           : "border-slate-700"
         }
       `}
     >
+      {provider.recommended && (
+        <span className="absolute -top-2 left-4 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-500 text-white">
+          ★ Recommended
+        </span>
+      )}
       <div className="text-4xl select-none">{provider.emoji}</div>
       <div className="flex-1 space-y-1">
         <div className="flex items-center gap-2 flex-wrap">

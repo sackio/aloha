@@ -124,7 +124,7 @@ async def execute_tool(
         return await execute_entities_tool(name, args, ha_client)
 
     if name in AUTOMATION_TOOL_NAMES:
-        return await execute_automations_tool(name, args, ha_client)
+        return await execute_automations_tool(name, args, ha_client, ha_config_dir)
 
     if name in CONFIG_TOOL_NAMES:
         return await execute_config_tool(name, args, ha_client, ha_config_dir)

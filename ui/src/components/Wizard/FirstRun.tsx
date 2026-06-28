@@ -24,11 +24,13 @@ import { OllamaSetup } from "./OllamaSetup";
 type WizardStep = "loading" | "picker" | "oauth" | "key_wizard" | "ollama" | "complete";
 
 export interface ProviderConfig {
-  id: "anthropic" | "openai" | "gemini" | "ollama" | "custom";
+  id: "anthropic" | "openai" | "gemini" | "ollama" | "openrouter" | "groq" | "custom";
   name: string;
   emoji: string;
   tagline: string;
   authBadge: "oauth" | "key" | "local";
+  /** Featured/recommended provider — highlighted in the picker grid */
+  recommended?: boolean;
   requires_api_key: boolean;
   models: string[];
   default_model: string;
