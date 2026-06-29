@@ -36,7 +36,7 @@ class AlohaConfig(BaseSettings):
     )
 
     # AI provider
-    ai_provider: Literal["anthropic", "openai", "gemini", "ollama", "openrouter", "groq", "custom"] = "anthropic"
+    ai_provider: Literal["anthropic", "openai", "gemini", "ollama", "openrouter", "groq", "custom", "aloha"] = "anthropic"
     model: str = "auto"
     safety_mode: Literal["strict", "normal", "permissive"] = "normal"
 
@@ -59,6 +59,11 @@ class AlohaConfig(BaseSettings):
     # Provider-specific optional fields
     ollama_url: str = "http://localhost:11434"
     custom_base_url: str = ""
+
+    # "Aloha managed" tier: the hosted relay the box talks to (OpenAI-compatible
+    # at {url}/v1, auth at {url}/auth). api_key holds the user's relay token.
+    managed_relay_url: str = "https://aloha.pushbuild.com"
+    managed_model: str = "anthropic/claude-sonnet-4.6"
 
     # Setup wizard completion flag
     setup_complete: bool = False

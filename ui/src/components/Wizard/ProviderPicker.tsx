@@ -16,12 +16,23 @@ import { ProviderConfig } from "./FirstRun";
 
 export const PROVIDERS: ProviderConfig[] = [
   {
+    id: "aloha",
+    name: "Aloha managed",
+    emoji: "🌺",
+    tagline: "Recommended — no API key, we run it for you",
+    authBadge: "managed",
+    recommended: true,
+    requires_api_key: false,
+    models: [],
+    default_model: "",
+    steps: [],
+  },
+  {
     id: "openrouter",
     name: "OpenRouter",
     emoji: "🌐",
-    tagline: "Recommended — one key, every model",
+    tagline: "One key, every model",
     authBadge: "key",
-    recommended: true,
     requires_api_key: true,
     models: [
       "anthropic/claude-sonnet-4.6",
@@ -205,8 +216,9 @@ function AuthBadge({ badge }: { badge: ProviderConfig["authBadge"] }) {
     oauth: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
     key: "bg-sky-500/20 text-sky-300 border border-sky-500/30",
     local: "bg-violet-500/20 text-violet-300 border border-violet-500/30",
+    managed: "bg-amber-500/20 text-amber-300 border border-amber-500/30",
   };
-  const labels = { oauth: "OAuth", key: "API Key", local: "Local" };
+  const labels = { oauth: "OAuth", key: "API Key", local: "Local", managed: "Hosted" };
 
   return (
     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${variants[badge]}`}>

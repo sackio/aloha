@@ -16,19 +16,20 @@ import { ProviderPicker } from "./ProviderPicker";
 import { OAuthFlow } from "./OAuthFlow";
 import { KeyWizard } from "./KeyWizard";
 import { OllamaSetup } from "./OllamaSetup";
+import { ManagedSignIn } from "./ManagedSignIn";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type WizardStep = "loading" | "picker" | "oauth" | "key_wizard" | "ollama" | "complete";
+type WizardStep = "loading" | "picker" | "oauth" | "key_wizard" | "ollama" | "managed" | "complete";
 
 export interface ProviderConfig {
-  id: "anthropic" | "openai" | "gemini" | "ollama" | "openrouter" | "groq" | "custom";
+  id: "anthropic" | "openai" | "gemini" | "ollama" | "openrouter" | "groq" | "custom" | "aloha";
   name: string;
   emoji: string;
   tagline: string;
-  authBadge: "oauth" | "key" | "local";
+  authBadge: "oauth" | "key" | "local" | "managed";
   /** Featured/recommended provider — highlighted in the picker grid */
   recommended?: boolean;
   requires_api_key: boolean;
@@ -187,7 +188,9 @@ export function FirstRun() {
     setSelectedProvider(provider);
     setUseKey(forceKey);
 
-    if (provider.id === "ollama") {
+    if (provider.id === "aloha") {
+      setStep("managed");
+    } else if (provider.id === "ollama") {
       setStep("ollama");
     } else if (forceKey || provider.authBadge !== "oauth") {
       setStep("key_wizard");
@@ -262,6 +265,15 @@ export function FirstRun() {
   if (step === "ollama") {
     return (
       <OllamaSetup
+        onSuccess={handleSuccess}
+        onBack={() => setStep("picker")}
+      />
+    );
+  }
+
+  if (step === "managed") {
+    return (
+      <ManagedSignIn
         onSuccess={handleSuccess}
         onBack={() => setStep("picker")}
       />

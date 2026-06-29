@@ -64,6 +64,18 @@ def get_backend(config) -> BaseBackend:  # noqa: ANN001
         from aloha.backends.groq import GroqBackend
         return GroqBackend(api_key=api_key, model=model)
 
+    if provider == "aloha":
+        # "Aloha managed": route through the hosted relay (OpenAI-compatible).
+        # api_key is the user's relay token; no provider key lives on the box.
+        from aloha.backends.openai_backend import OpenAIBackend
+        managed_model = getattr(config, "managed_model", "") or "anthropic/claude-sonnet-4.6"
+        relay = getattr(config, "managed_relay_url", "") or "https://aloha.pushbuild.com"
+        return OpenAIBackend(
+            api_key=api_key,
+            model=(model if model and model != "auto" else managed_model),
+            base_url=relay.rstrip("/") + "/v1",
+        )
+
     if provider == "custom":
         from aloha.backends.openai_backend import OpenAIBackend
         return OpenAIBackend(

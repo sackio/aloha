@@ -92,6 +92,9 @@ def create_app(config: AlohaConfig) -> FastAPI:
     from aloha.routes.oauth_routes import router as oauth_router
     app.include_router(oauth_router)
 
+    from aloha.routes.managed import router as managed_router
+    app.include_router(managed_router)
+
     # -----------------------------------------------------------------------
     # Mount MCP server at /mcp
     # -----------------------------------------------------------------------
