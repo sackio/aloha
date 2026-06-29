@@ -1,226 +1,131 @@
-# 🌺 Aloha — alo·HA
-> AI Agent for Home Assistant — baked into one Docker image
+<div align="center">
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/ghcr.io/aloha-ha/aloha?label=Docker%20Pulls&logo=docker)](https://ghcr.io/aloha-ha/aloha)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![HAOS Add-on](https://img.shields.io/badge/HAOS-Add--on-41BDF5?logo=home-assistant)](https://www.home-assistant.io/addons/)
+# 🌺 Aloha
 
----
+### An AI agent for Home Assistant — like Claude Code, for your smart home.
 
-## Quick Start
+Chat with your home in plain English. Aloha reads your entities, writes
+automations, edits config, debugs what's broken, and operates Home Assistant for
+you — with a curated library of HA **skills** and full **MCP** tool access.
 
-```bash
-docker run -d \
-  --name aloha \
-  -p 7123:7123 \
-  -v aloha-data:/data \
-  ghcr.io/aloha-ha/aloha:latest
-```
+**Open source. Bring your own AI key — or use the managed [aloha.pushbuild.com](https://aloha.pushbuild.com).**
 
-Browse to **http://your-host:7123** to set up your AI provider.
+</div>
 
 ---
 
 ## What is Aloha?
 
-Aloha is an AI-powered agent that lives inside your Home Assistant setup and lets you control, configure, and automate your smart home using plain English. Ask it to turn off the lights, create an automation, update a dashboard, or dig into your error logs — it figures out how to make it happen. No scripting required.
+Home Assistant is the most powerful smart-home platform there is — and almost
+impossible for a non-technical person to configure. AI coding agents are fluent
+in HA's YAML, its automations, its quirks. **Aloha glues them together:** a
+baked-in agent that administers Home Assistant through a friendly chat UI.
 
-Under the hood, Aloha ships as a single Docker image that bundles Home Assistant and the Aloha agent together. One `docker run` command and you have a fully working smart home platform with an AI assistant built in. If you already run Home Assistant, Aloha can connect to your existing instance instead, or install as a native HAOS add-on alongside the Supervisor.
-
----
-
-## Features
-
-- **Multi-provider AI** — choose from Anthropic Claude, OpenAI, Google Gemini, Ollama (local), or any OpenAI-compatible endpoint
-- **74 Home Assistant tools** — read and control entities, manage automations, edit config files, update dashboards, interact with HACS, and more
-- **Supervised and autonomous modes** — `strict` mode gates every write behind a human approval step; `normal` and `permissive` modes auto-approve safe actions
-- **Diff review for config changes** — any change to YAML or config files is shown as a before/after diff before being applied; nothing is written without your sign-off
-- **MCP server for power users** — connect Claude Code, Cursor, or VS Code directly to Aloha's tool layer over the Model Context Protocol
-- **HAOS add-on option** — install from the add-on store if you already run Home Assistant OS
-- **Pi image coming soon** — a ready-to-flash Raspberry Pi image with everything pre-installed
-
----
-
-## Supported AI Providers
-
-| Provider | Auth | Notes |
-|---|---|---|
-| Anthropic | API key | Claude Opus 4.5, Sonnet 4.5, Haiku 3.5 |
-| OpenAI | API key | GPT-4o, GPT-4o-mini, GPT-4 Turbo |
-| Google Gemini | API key | Gemini 2.0 Flash, 1.5 Pro, 1.5 Flash |
-| Ollama | None | Runs locally; configure Ollama URL in settings |
-| Custom (OpenAI-compatible) | Optional | Any endpoint that speaks the OpenAI API |
-| Azure OpenAI | API key | Point `custom_base_url` at your Azure deployment |
-| LM Studio | None | OpenAI-compatible local inference |
+- 🛠️ **76 Home Assistant tools** — read/control entities, CRUD automations, edit
+  config files, manage dashboards & HACS, read logs and traces.
+- 📚 **HA skills** — curated playbooks the agent follows for real tasks:
+  set up motion lighting, debug why an automation didn't fire, triage unavailable
+  entities, run a health check, make safe config changes. (Easily extensible.)
+- 🔌 **MCP, both ways** — Aloha exposes its tools as an MCP server *and* can
+  consume external MCP servers to extend the agent.
+- 🤖 **Any AI** — Anthropic Claude, OpenAI, Gemini, Ollama (local/offline),
+  Groq, OpenRouter, or any OpenAI-compatible endpoint. Bring your own key.
+- 🛡️ **Safe by default** — every config change is shown as a diff for your
+  approval before it's written. Nothing touches your setup without sign-off.
 
 ---
 
-## Installation Options
+## Two ways to run it
 
-### 1. Docker (all-in-one)
+### 1. Self-host (open source, free)
 
-The simplest option. Starts Home Assistant and Aloha together in a single container.
+Bring your own AI provider key (or run a local model with Ollama — fully offline,
+no account). You own everything; nothing phones home.
 
 ```bash
-docker run -d \
-  --name aloha \
-  -p 7123:7123 \
-  -p 8123:8123 \
-  -v aloha-data:/data \
-  ghcr.io/aloha-ha/aloha:latest
-```
-
-- Aloha UI: **http://your-host:7123**
-- Home Assistant: **http://your-host:8123**
-
-If you already have a Home Assistant instance, run in standalone mode and point Aloha at it:
-
-```bash
-docker run -d \
-  --name aloha \
-  -p 7123:7123 \
-  -e ALOHA_MODE=standalone \
-  -e ALOHA_HA_URL=http://your-ha-host:8123 \
-  -v aloha-data:/data \
-  ghcr.io/aloha-ha/aloha:latest
-```
-
-### 2. HAOS Add-on
-
-Add the Aloha repository to Home Assistant and install from the add-on store:
-
-1. In Home Assistant, go to **Settings > Add-ons > Add-on Store**.
-2. Click the three-dot menu (top right) and choose **Repositories**.
-3. Add: `https://github.com/aloha-ha/aloha`
-4. Find **Aloha** in the list and click **Install**.
-5. Start the add-on and open the Web UI on port `7123`.
-
-In add-on mode, Aloha connects to the Supervisor automatically — no token or URL configuration needed.
-
-### 3. Synology NAS
-
-Install using Container Manager (DSM 7.2+):
-
-1. Open **Container Manager > Registry** and search for `ghcr.io/aloha-ha/aloha`.
-2. Download the `latest` tag.
-3. Go to **Container > Create**, select the image.
-4. Under **Port Settings**, map host port `7123` to container port `7123`.
-5. Under **Volume**, create a new volume and mount it at `/data`.
-6. Apply and start the container.
-7. Browse to **http://your-nas-ip:7123**.
-
----
-
-## Architecture
-
-Aloha uses [s6-overlay v3](https://github.com/just-containers/s6-overlay) to manage both services inside the container. The Aloha agent waits for Home Assistant to be ready before starting.
-
-```
-┌─────────────────────────────────────────────────────┐
-│                Docker Container                      │
-│                                                     │
-│  ┌──────────────────────────────────────────────┐   │
-│  │              s6-overlay v3                   │   │
-│  │                                              │   │
-│  │   ┌─────────────────┐  ┌──────────────────┐  │   │
-│  │   │  Home Assistant  │  │   Aloha Agent    │  │   │
-│  │   │   port 8123      │  │   port 7123      │  │   │
-│  │   │  (internal only) │  │  FastAPI + React │  │   │
-│  │   └────────┬─────────┘  └────────┬─────────┘  │   │
-│  │            │  localhost:8123      │            │   │
-│  │            └────────────────────►┘            │   │
-│  └──────────────────────────────────────────────┘   │
-│                                                     │
-│  ┌──────────────────────────────────────────────┐   │
-│  │            Volume: /data                     │   │
-│  │   /data/homeassistant  — HA config dir       │   │
-│  │   /data/aloha          — Aloha config,       │   │
-│  │                          encrypted creds,    │   │
-│  │                          sessions, diffs     │   │
-│  └──────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────┘
-         │                        │
-    port 8123                port 7123
-  (HA, optional)           (Aloha UI — expose this)
-```
-
-Startup order: s6 starts `homeassistant` first; the `aloha` service declares a dependency and additionally polls `http://localhost:8123/api/` before launching uvicorn.
-
----
-
-## Development
-
-Clone the repo:
-
-```bash
-git clone https://github.com/aloha-ha/aloha.git
+git clone https://github.com/sackio/aloha.git
 cd aloha
+docker compose up -d --build
 ```
 
-Set up the React frontend:
+- **Aloha UI:** http://your-host:7123  ·  **Home Assistant:** http://your-host:8123
+
+Already running Home Assistant? Point Aloha at it instead of bundling one:
 
 ```bash
-cd frontend
-npm install
-npm run dev        # vite dev server on :5173 (proxies API to :7123)
+docker run -d --name aloha -p 7123:7123 \
+  -e ALOHA_MODE=standalone -e ALOHA_HA_URL=http://your-ha:8123 \
+  -v aloha-data:/data ghcr.io/sackio/aloha:latest   # prebuilt images coming soon
 ```
 
-Set up the Python backend:
+Also ships as a **Home Assistant OS add-on** (`haos-addon/`) — Supervisor injects
+the HA token automatically.
 
-```bash
-cd ..
-pip install -r requirements.txt   # or: pip install -e ".[dev]"
-```
+### 2. Aloha managed (no setup, no API key)
 
-Run both together:
-
-```bash
-# Terminal 1 — backend
-ALOHA_MODE=standalone \
-ALOHA_HA_URL=http://your-ha:8123 \
-uvicorn aloha.main:app --reload --port 7123
-
-# Terminal 2 — frontend
-cd frontend && npm run dev
-```
-
-The frontend dev server proxies `/api` and `/health` to the backend, so you can work on both without rebuilding the Docker image.
+Don't want to deal with API keys and billing? Use the hosted agent at
+**[aloha.pushbuild.com](https://aloha.pushbuild.com)** — pick "Aloha managed" in
+the setup wizard, sign in, and you're chatting with your home. Flat monthly with
+generous usage. *(In active development.)*
 
 ---
 
-## MCP External Clients
+## First run
 
-Aloha exposes its full tool suite over the Model Context Protocol at:
+Open the Aloha UI and the wizard walks you through picking an AI provider and
+connecting to Home Assistant. Then just ask:
 
-```
-http://your-host:7123/mcp
-```
+> *"What lights are on right now?"*
+> *"Create a bedtime routine that locks the doors and turns off the lights at 11pm."*
+> *"Why didn't my away-mode automation fire yesterday?"*
+> *"Set up motion-activated lighting in the hallway."*
 
-This lets Claude Code, Cursor, VS Code, and other MCP-aware clients use Aloha's 74 Home Assistant tools directly from their editors.
+---
 
-### Connect with Claude Code
+## Power users: connect your IDE over MCP
+
+Aloha exposes its full tool suite over the Model Context Protocol:
 
 ```bash
 claude mcp add aloha http://your-host:7123/mcp
 ```
 
-Then in any Claude Code session you can ask it to control your home, read entity states, create automations, and more — all through Aloha's approval-gated tool layer.
-
-### Connect with Cursor or VS Code
-
-Add the following to your MCP client configuration:
-
-```json
-{
-  "mcpServers": {
-    "aloha": {
-      "url": "http://your-host:7123/mcp"
-    }
-  }
-}
-```
+Use Claude Code, Cursor, or any MCP client to manage your home from your editor.
 
 ---
+
+## How it works
+
+```
+┌──────────────────────── one container ────────────────────────┐
+│  Home Assistant (:8123)  ◄──localhost──  Aloha agent (:7123)   │
+│                                          FastAPI + React UI    │
+│                                          agent loop → 76 tools │
+│                                          skills · MCP client   │
+│   shared volume: /data  (HA config + Aloha settings/sessions)  │
+└────────────────────────────────────────────────────────────────┘
+```
+
+Provider-agnostic agent loop, multi-step tool use, and a diff→approve safety gate.
+
+---
+
+## Status
+
+Aloha is under active development. The agent, tools, skills, MCP support, and the
+Docker/standalone/add-on paths work today; prebuilt multi-arch images, the
+Raspberry Pi image, and the managed tier are in progress.
+
+## Contributing
+
+Issues and PRs welcome. Skills are just markdown files in `aloha/skills/library/` —
+adding one is a great first contribution.
+
+## Contact
+
+Questions, feedback, or interested in the managed tier? Reach us through the
+contact form at **[aloha.pushbuild.com](https://aloha.pushbuild.com)**, or open a
+GitHub issue.
 
 ## License
 
