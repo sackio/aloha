@@ -45,12 +45,18 @@ def load_creds(data_dir: Path) -> dict | None:
         return None
 
 
-def ensure_registered(relay_url: str, data_dir: Path) -> dict:
-    """Return persisted {box_id, token}, registering with the relay if needed."""
+def ensure_registered(relay_url: str, data_dir: Path, auth_token: str = "") -> dict:
+    """Return persisted {box_id, token}, registering with the relay if needed.
+
+    Registration is gated to active accounts (the paid tier) — pass the box's
+    relay account token as auth_token. Raises httpx.HTTPStatusError (402) if the
+    account isn't entitled.
+    """
     existing = load_creds(data_dir)
     if existing and existing.get("box_id") and existing.get("token"):
         return existing
-    r = httpx.post(f"{relay_url.rstrip('/')}/tunnel/register", timeout=30)
+    headers = {"Authorization": f"Bearer {auth_token}"} if auth_token else {}
+    r = httpx.post(f"{relay_url.rstrip('/')}/tunnel/register", headers=headers, timeout=30)
     r.raise_for_status()
     creds = r.json()
     Path(data_dir).mkdir(parents=True, exist_ok=True)

@@ -13,6 +13,15 @@ FROM ghcr.io/home-assistant/home-assistant:stable
 COPY requirements.txt /tmp/aloha-req.txt
 RUN pip3 install --no-cache-dir -r /tmp/aloha-req.txt && rm /tmp/aloha-req.txt
 
+# Bundle cloudflared so the box can offer a free public MCP URL out of the box
+# (the "Cloudflare tunnel" option in aloha/public_url.py). Arch-matched binary.
+RUN set -eux; \
+    if command -v apk >/dev/null; then apk add --no-cache curl ca-certificates; \
+    elif command -v apt-get >/dev/null; then apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*; fi; \
+    case "$(uname -m)" in x86_64) A=amd64;; aarch64) A=arm64;; armv7l|armhf|arm) A=arm;; *) A=amd64;; esac; \
+    curl -fsSL -o /usr/local/bin/cloudflared "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${A}"; \
+    chmod +x /usr/local/bin/cloudflared
+
 COPY aloha/ /aloha/
 ENV PYTHONPATH=/
 

@@ -22,6 +22,14 @@ class EnableRequest(BaseModel):
     ngrok_authtoken: str | None = None
 
 
+def _relay_token(config) -> str:
+    """The relay tunnel (paid tier) authenticates with the box's Aloha account
+    token. When the box uses the managed AI tier, api_key IS that account token."""
+    if getattr(config, "ai_provider", "") == "aloha":
+        return config.api_key or ""
+    return ""
+
+
 @router.get("")
 async def get_status(request: Request) -> JSONResponse:
     mgr = request.app.state.public_url_manager
@@ -38,7 +46,8 @@ async def enable(req: EnableRequest, request: Request) -> JSONResponse:
     config.public_url_provider = req.provider if req.provider in (
         "relay", "cloudflared", "ngrok") else "none"
 
-    status = await mgr.start(config.public_url_provider, config.ngrok_authtoken or "")
+    status = await mgr.start(config.public_url_provider,
+                             config.ngrok_authtoken or "", _relay_token(config))
 
     # Only persist the provider if it actually started (else fall back to none).
     if status.get("error"):

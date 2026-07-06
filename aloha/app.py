@@ -117,8 +117,9 @@ def create_app(config: AlohaConfig) -> FastAPI:
     async def _start_public_url() -> None:
         if config.public_url_provider and config.public_url_provider != "none":
             log.info("Starting public MCP URL via %s", config.public_url_provider)
+            relay_token = config.api_key or "" if config.ai_provider == "aloha" else ""
             await app.state.public_url_manager.start(
-                config.public_url_provider, config.ngrok_authtoken or ""
+                config.public_url_provider, config.ngrok_authtoken or "", relay_token
             )
 
     @app.on_event("shutdown")

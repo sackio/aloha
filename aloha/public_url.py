@@ -73,13 +73,14 @@ class PublicUrlManager:
         self.url = ""
         self.error = ""
 
-    async def start(self, provider: Provider, ngrok_authtoken: str = "") -> dict:
+    async def start(self, provider: Provider, ngrok_authtoken: str = "",
+                    relay_token: str = "") -> dict:
         await self.stop()
         self.provider = provider
         self.error = ""
         try:
             if provider == "relay":
-                await self._start_relay()
+                await self._start_relay(relay_token)
             elif provider == "cloudflared":
                 await self._start_cloudflared()
             elif provider == "ngrok":
@@ -96,9 +97,9 @@ class PublicUrlManager:
 
     # -- relay ---------------------------------------------------------------
 
-    async def _start_relay(self) -> None:
+    async def _start_relay(self, relay_token: str = "") -> None:
         creds = await asyncio.to_thread(
-            relay_tunnel.ensure_registered, self.relay_url, self.data_dir
+            relay_tunnel.ensure_registered, self.relay_url, self.data_dir, relay_token
         )
         self.url = relay_tunnel.public_url(self.relay_url, creds["box_id"])
         self._task = asyncio.create_task(
