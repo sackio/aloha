@@ -1,0 +1,5 @@
+# Large HAOS images + per-VM state — never commit.
+.cache/
+*.qcow2
+*.qcow2.xz
+OVMF_VARS.fd

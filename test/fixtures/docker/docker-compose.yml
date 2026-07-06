@@ -1,0 +1,31 @@
+# Aloha test fixture — "HA Container" (plain Docker) environment.
+#
+# Stands up a throwaway Home Assistant Core container (NO Supervisor) so we can
+# exercise the Docker path: the docker_* tools, environment detection
+# (kind == "docker"), and the standalone Aloha agent talking to a real HA.
+#
+# This mirrors how most self-hosters run HA in Docker. There is deliberately no
+# Supervisor here — that path is covered by test/fixtures/haos.
+#
+# Usage:
+#   docker compose -f test/fixtures/docker/docker-compose.yml up -d
+#   ./test/fixtures/docker/setup.sh        # onboard HA + mint a long-lived token
+#   ./test/fixtures/docker/teardown.sh     # nuke it all
+#
+# HA is published on :8124 (host) to avoid colliding with a real HA on :8123.
+
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: aloha-test-ha
+    # Mount the host docker socket so Aloha's docker_* tools have something real
+    # to talk to when it runs against this fixture. (Read-mostly in tests.)
+    volumes:
+      - aloha-test-ha-config:/config
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "8124:8123"
+    restart: unless-stopped
+
+volumes:
+  aloha-test-ha-config:
