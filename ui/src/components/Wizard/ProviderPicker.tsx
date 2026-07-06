@@ -274,84 +274,6 @@ function ProviderCard({
 }
 
 // ---------------------------------------------------------------------------
-// Quick-key input (revealed by "I already have a key" link)
-// ---------------------------------------------------------------------------
-
-function QuickKeyEntry({
-  onConfirm,
-  onClose,
-}: {
-  onConfirm: (provider: ProviderConfig, key: string) => void;
-  onClose: () => void;
-}) {
-  const [selectedId, setSelectedId] = useState<ProviderConfig["id"]>("anthropic");
-  const [key, setKey] = useState("");
-
-  const keyProviders = PROVIDERS.filter((p) => p.requires_api_key);
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const provider = PROVIDERS.find((p) => p.id === selectedId)!;
-    onConfirm(provider, key.trim());
-  }
-
-  return (
-    <div className="mt-6 p-5 rounded-xl bg-slate-800 border border-slate-700 space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-slate-200">
-          Connect with an existing API key
-        </p>
-        <button
-          onClick={onClose}
-          className="text-slate-500 hover:text-slate-300 transition-colors text-sm"
-        >
-          Cancel
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div>
-          <label className="block text-xs text-slate-400 mb-1">Provider</label>
-          <select
-            value={selectedId}
-            onChange={(e) =>
-              setSelectedId(e.target.value as ProviderConfig["id"])
-            }
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
-          >
-            {keyProviders.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-xs text-slate-400 mb-1">API Key</label>
-          <input
-            type="password"
-            value={key}
-            onChange={(e) => setKey(e.target.value)}
-            placeholder="sk-..."
-            autoFocus
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={!key.trim()}
-          className="w-full bg-sky-500 hover:bg-sky-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-lg py-2 text-sm transition-colors"
-        >
-          Connect
-        </button>
-      </form>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // ProviderPicker
 // ---------------------------------------------------------------------------
 
@@ -359,54 +281,61 @@ interface ProviderPickerProps {
   onSelect: (provider: ProviderConfig, forceKey?: boolean) => void;
 }
 
-export function ProviderPicker({ onSelect }: ProviderPickerProps) {
-  const [showQuickKey, setShowQuickKey] = useState(false);
+// Hero card for the recommended, no-key managed option.
+function ManagedHero({ provider, onClick }: { provider: ProviderConfig; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="group w-full text-left p-6 rounded-2xl transition-all hover:-translate-y-0.5"
+      style={{
+        background:
+          "linear-gradient(#1e293b,#1e293b) padding-box, linear-gradient(105deg,#ff7d5c,#ffb866) border-box",
+        border: "1.5px solid transparent",
+      }}
+    >
+      <div className="flex items-center gap-4">
+        <div className="text-4xl select-none">{provider.emoji}</div>
+        <div className="flex-1">
+          <div className="text-lg font-semibold text-slate-100">{provider.name}</div>
+          <p className="text-sm text-slate-400">No API key — sign in and we run the AI for you.</p>
+        </div>
+        <span className="shrink-0 text-sky-400 group-hover:translate-x-0.5 transition-transform">→</span>
+      </div>
+    </button>
+  );
+}
 
-  function handleQuickKeyConfirm(provider: ProviderConfig) {
-    onSelect(provider, true);
-  }
+export function ProviderPicker({ onSelect }: ProviderPickerProps) {
+  const managed = PROVIDERS.find((p) => p.id === "aloha")!;
+  const byo = PROVIDERS.filter((p) => p.id !== "aloha");
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center px-6 py-16">
       <div className="w-full max-w-2xl space-y-8">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-slate-100">
-            Welcome to{" "}
-            <span className="text-sky-400">Aloha</span>
-          </h1>
-          <p className="text-slate-400">
-            Choose your AI provider to get started. You can change this later.
-          </p>
+          <h1 className="text-3xl font-bold text-slate-100">Let Aloha be your agent</h1>
+          <p className="text-slate-400">The easy way, or bring your own AI. Change it anytime.</p>
         </div>
 
-        {/* Provider grid — 3 columns, 2 rows */}
-        <div className="grid grid-cols-3 gap-4">
-          {PROVIDERS.map((provider) => (
-            <ProviderCard
-              key={provider.id}
-              provider={provider}
-              onClick={() => onSelect(provider)}
-            />
-          ))}
-        </div>
+        {/* Primary: managed, no key */}
+        <ManagedHero provider={managed} onClick={() => onSelect(managed)} />
 
-        {/* Quick-key link / inline form */}
-        {showQuickKey ? (
-          <QuickKeyEntry
-            onConfirm={handleQuickKeyConfirm}
-            onClose={() => setShowQuickKey(false)}
-          />
-        ) : (
-          <div className="text-center">
-            <button
-              onClick={() => setShowQuickKey(true)}
-              className="text-sm text-slate-500 hover:text-sky-400 underline underline-offset-2 transition-colors"
-            >
-              I already have a key
-            </button>
+        {/* Secondary: bring your own AI key */}
+        <div className="space-y-3">
+          <div className="text-xs uppercase tracking-wide text-slate-500 text-center">
+            or bring your own AI
           </div>
-        )}
+          <div className="grid grid-cols-3 gap-3">
+            {byo.map((provider) => (
+              <ProviderCard
+                key={provider.id}
+                provider={provider}
+                onClick={() => onSelect(provider)}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
