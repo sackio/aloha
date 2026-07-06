@@ -53,6 +53,16 @@ from aloha.mcp.tools.skills import (
     TOOL_NAMES as SKILL_TOOL_NAMES,
     execute_skills_tool,
 )
+from aloha.mcp.tools.supervisor import (
+    TOOLS as SUPERVISOR_TOOLS,
+    TOOL_NAMES as SUPERVISOR_TOOL_NAMES,
+    execute_supervisor_tool,
+)
+from aloha.mcp.tools.docker_ops import (
+    TOOLS as DOCKER_TOOLS,
+    TOOL_NAMES as DOCKER_TOOL_NAMES,
+    execute_docker_tool,
+)
 
 # ---------------------------------------------------------------------------
 # Aggregate all tools
@@ -66,6 +76,8 @@ ALL_TOOLS: list[ToolDef] = [
     *DASHBOARD_TOOLS,
     *HACS_TOOLS,
     *SKILL_TOOLS,
+    *SUPERVISOR_TOOLS,
+    *DOCKER_TOOLS,
 ]
 
 TOOL_MAP: dict[str, ToolDef] = {tool.name: tool for tool in ALL_TOOLS}
@@ -140,6 +152,12 @@ async def execute_tool(
 
     if name in SKILL_TOOL_NAMES:
         return await execute_skills_tool(name, args)
+
+    if name in SUPERVISOR_TOOL_NAMES:
+        return await execute_supervisor_tool(name, args)
+
+    if name in DOCKER_TOOL_NAMES:
+        return await execute_docker_tool(name, args)
 
     # Should never reach here given the TOOL_MAP check above, but be defensive.
     raise ValueError(f"Tool '{name}' is registered but has no dispatcher.")

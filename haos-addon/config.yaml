@@ -4,6 +4,11 @@ version: "0.1.0"
 slug: aloha
 init: false
 homeassistant_api: true
+# Full admin: the agent manages the Supervisor (add-ons, Core/OS updates,
+# backups) via the Supervisor API, and HA users/tokens via the auth API.
+hassio_api: true
+hassio_role: admin
+auth_api: true
 ingress: true
 ingress_port: 7123
 panel_icon: mdi:robot-love
