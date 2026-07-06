@@ -20,6 +20,15 @@ const OPTIONS: Array<{ id: Provider; emoji: string; title: string; blurb: string
     blurb: "Stable branded URL. Nothing to install or sign up for." },
 ];
 
+// Static design preview (preview.html) has no backend — simulate so the flow
+// is clickable without live API calls.
+const DEMO = typeof window !== "undefined" && window.location.pathname.includes("preview");
+const DEMO_URL: Record<Provider, string> = {
+  cloudflared: "https://calm-otter-8123.trycloudflare.com/mcp",
+  ngrok: "https://a1b2-203-0-113-7.ngrok-free.app/mcp",
+  relay: "https://aloha.pushbuild.com/box/DEMO7xk29fQ/mcp",
+};
+
 export function PublicUrlPicker({ onUrl }: { onUrl?: (url: string) => void }) {
   const [status, setStatus] = useState<PublicUrlStatus | null>(null);
   const [busy, setBusy] = useState<Provider | null>(null);
@@ -28,6 +37,7 @@ export function PublicUrlPicker({ onUrl }: { onUrl?: (url: string) => void }) {
   const [err, setErr] = useState("");
 
   useEffect(() => {
+    if (DEMO) return;
     getPublicUrl().then((s) => { setStatus(s); if (s.url) onUrl?.(s.url); }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -36,6 +46,12 @@ export function PublicUrlPicker({ onUrl }: { onUrl?: (url: string) => void }) {
     setErr("");
     if (p === "ngrok" && !showNgrok) { setShowNgrok(true); return; }
     setBusy(p);
+    if (DEMO) {
+      await new Promise((r) => setTimeout(r, 500));
+      const s: PublicUrlStatus = { provider: p, url: DEMO_URL[p], online: true, error: "" };
+      setStatus(s); onUrl?.(s.url); setBusy(null);
+      return;
+    }
     try {
       const s = await setPublicUrl(p, p === "ngrok" ? ngrokTok.trim() : undefined);
       setStatus(s);
@@ -50,8 +66,10 @@ export function PublicUrlPicker({ onUrl }: { onUrl?: (url: string) => void }) {
 
   async function turnOff() {
     setBusy("relay");
-    try { const s = await disablePublicUrl(); setStatus(s); onUrl?.(""); setShowNgrok(false); }
-    finally { setBusy(null); }
+    try {
+      if (DEMO) { setStatus(null); onUrl?.(""); setShowNgrok(false); return; }
+      const s = await disablePublicUrl(); setStatus(s); onUrl?.(""); setShowNgrok(false);
+    } finally { setBusy(null); }
   }
 
   const active = status?.online ? status.provider : null;

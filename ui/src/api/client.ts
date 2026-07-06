@@ -118,18 +118,22 @@ async function request<T>(
   });
 
   if (!res.ok) {
-    let body: unknown;
+    // Read the body ONCE, then try to parse it as JSON. Reading the stream
+    // twice (res.json() then res.text()) throws "body stream already read".
+    const raw = await res.text().catch(() => "");
+    let body: unknown = raw;
     try {
-      body = await res.json();
+      body = raw ? JSON.parse(raw) : null;
     } catch {
-      body = await res.text();
+      /* not JSON — keep the raw text */
     }
-    const message =
-      typeof body === "object" &&
-      body !== null &&
-      "detail" in body
-        ? String((body as Record<string, unknown>).detail)
-        : `HTTP ${res.status}`;
+    const detail =
+      typeof body === "object" && body !== null && "detail" in body
+        ? (body as Record<string, unknown>).detail
+        : undefined;
+    const message = detail
+      ? (typeof detail === "string" ? detail : JSON.stringify(detail))
+      : `HTTP ${res.status}`;
     throw new APIError(res.status, message, body);
   }
 
