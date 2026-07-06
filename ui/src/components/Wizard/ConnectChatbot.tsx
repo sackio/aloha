@@ -9,6 +9,7 @@
 import React, { useState } from "react";
 import { useSettingsStore } from "../../stores/settings";
 import { PublicUrlPicker } from "./PublicUrlPicker";
+import { McpKeys } from "./McpKeys";
 
 function Copy({ text }: { text: string }) {
   const [done, setDone] = useState(false);
@@ -38,8 +39,16 @@ export function ConnectChatbot({ onDone, onBack }: { onDone: () => void; onBack:
   const setSetupComplete = useSettingsStore((s) => s.setSetupComplete);
   const origin = typeof window !== "undefined" ? window.location.origin : "http://aloha.local:7123";
   const [publicUrl, setPublicUrl] = useState("");
+  const [mcpSecret, setMcpSecret] = useState("");
   // Prefer the public URL (reachable from the cloud) once one is live.
   const mcpUrl = publicUrl || `${origin}/mcp`;
+
+  // Once an access key is minted, embed its secret in the copy-paste snippets.
+  const claudeCmd = `claude mcp add --transport sse aloha ${mcpUrl}` +
+    (mcpSecret ? ` --header "Authorization: Bearer ${mcpSecret}"` : "");
+  const jsonCfg = mcpSecret
+    ? `{\n  "mcpServers": {\n    "aloha": {\n      "url": "${mcpUrl}",\n      "type": "sse",\n      "headers": { "Authorization": "Bearer ${mcpSecret}" }\n    }\n  }\n}`
+    : `{\n  "mcpServers": {\n    "aloha": { "url": "${mcpUrl}", "type": "sse" }\n  }\n}`;
 
   async function finish() {
     try { await setSetupComplete(true); } catch { /* non-fatal */ }
@@ -59,6 +68,8 @@ export function ConnectChatbot({ onDone, onBack }: { onDone: () => void; onBack:
 
         <PublicUrlPicker onUrl={setPublicUrl} />
 
+        <McpKeys onSecret={setMcpSecret} />
+
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-5">
           {publicUrl && (
             <div className="text-xs text-emerald-300/80">
@@ -66,11 +77,16 @@ export function ConnectChatbot({ onDone, onBack }: { onDone: () => void; onBack:
             </div>
           )}
           <Snippet label="Your Aloha MCP endpoint" code={mcpUrl} />
-          <Snippet label="Claude Code — one command" code={`claude mcp add --transport sse aloha ${mcpUrl}`} />
+          <Snippet label="Claude Code — one command" code={claudeCmd} />
           <Snippet
             label="Cursor / Claude Desktop / VS Code — mcp config"
-            code={`{\n  "mcpServers": {\n    "aloha": { "url": "${mcpUrl}", "type": "sse" }\n  }\n}`}
+            code={jsonCfg}
           />
+          {!mcpSecret && (
+            <div className="text-xs text-slate-500">
+              Tip: create an access key above and its secret drops into these snippets automatically.
+            </div>
+          )}
         </div>
 
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-2">

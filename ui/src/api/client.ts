@@ -325,3 +325,25 @@ export function relayLogin(email: string, password: string): Promise<{ ok: boole
 export function relaySubscribe(): Promise<{ url: string }> {
   return request<{ url: string }>("/api/relay/subscribe", { method: "POST" });
 }
+
+// ---------------------------------------------------------------------------
+// MCP access keys (Authorization: Bearer <secret> on /mcp)
+// ---------------------------------------------------------------------------
+
+export interface McpKey { id: string; name: string; created_at: string; secret_prefix: string }
+
+export function getMcpKeys(): Promise<McpKey[]> {
+  return request<McpKey[]>("/api/mcp-keys");
+}
+
+export function mintMcpKey(name: string): Promise<{ id: string; secret: string; name: string }> {
+  return request("/api/mcp-keys", { method: "POST", body: JSON.stringify({ name }) });
+}
+
+export function regenMcpKey(id: string): Promise<{ id: string; secret: string }> {
+  return request(`/api/mcp-keys/${encodeURIComponent(id)}/regenerate`, { method: "POST" });
+}
+
+export function deleteMcpKey(id: string): Promise<{ ok: boolean }> {
+  return request(`/api/mcp-keys/${encodeURIComponent(id)}`, { method: "DELETE" });
+}

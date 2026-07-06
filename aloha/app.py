@@ -18,7 +18,7 @@ import logging
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from aloha.config import AlohaConfig
@@ -74,6 +74,25 @@ def create_app(config: AlohaConfig) -> FastAPI:
     app.state.config = config
 
     # -----------------------------------------------------------------------
+    # MCP endpoint auth: require a valid key secret on /mcp* whenever any MCP
+    # key exists (mint one before exposing a public URL). No keys → open (local).
+    # -----------------------------------------------------------------------
+    from aloha.mcp import auth as mcp_auth
+
+    @app.middleware("http")
+    async def _mcp_auth(request: Request, call_next):
+        path = request.url.path
+        if path == "/mcp" or path.startswith("/mcp/"):
+            if mcp_auth.any_keys(config.data_dir):
+                token = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
+                if not mcp_auth.verify(config.data_dir, token):
+                    return JSONResponse(
+                        {"error": "unauthorized",
+                         "message": "Valid MCP key required — send 'Authorization: Bearer <secret>'."},
+                        status_code=401)
+        return await call_next(request)
+
+    # -----------------------------------------------------------------------
     # Include API routers
     # -----------------------------------------------------------------------
 
@@ -103,6 +122,9 @@ def create_app(config: AlohaConfig) -> FastAPI:
 
     from aloha.routes.relay_account import router as relay_account_router
     app.include_router(relay_account_router)
+
+    from aloha.routes.mcp_keys_route import router as mcp_keys_router
+    app.include_router(mcp_keys_router)
 
     # -----------------------------------------------------------------------
     # Public MCP URL manager (relay / cloudflared / ngrok) — lets a box behind
