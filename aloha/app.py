@@ -95,6 +95,9 @@ def create_app(config: AlohaConfig) -> FastAPI:
     from aloha.routes.managed import router as managed_router
     app.include_router(managed_router)
 
+    from aloha.routes.skills_route import router as skills_router
+    app.include_router(skills_router)
+
     # -----------------------------------------------------------------------
     # Mount MCP server at /mcp
     # -----------------------------------------------------------------------

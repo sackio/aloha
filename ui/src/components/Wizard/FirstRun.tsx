@@ -17,12 +17,13 @@ import { OAuthFlow } from "./OAuthFlow";
 import { KeyWizard } from "./KeyWizard";
 import { OllamaSetup } from "./OllamaSetup";
 import { ManagedSignIn } from "./ManagedSignIn";
+import { ConnectChatbot } from "./ConnectChatbot";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type WizardStep = "loading" | "picker" | "oauth" | "key_wizard" | "ollama" | "managed" | "complete";
+type WizardStep = "loading" | "welcome" | "connect" | "picker" | "oauth" | "key_wizard" | "ollama" | "managed" | "complete";
 
 export interface ProviderConfig {
   id: "anthropic" | "openai" | "gemini" | "ollama" | "openrouter" | "groq" | "custom" | "aloha";
@@ -145,7 +146,7 @@ export function FirstRun() {
         return;
       }
 
-      setStep("picker");
+      setStep("welcome");
     }
 
     checkHealth();
@@ -169,7 +170,7 @@ export function FirstRun() {
         }
         if (health.ha_connected) {
           stopPoll();
-          setStep("picker");
+          setStep("welcome");
         }
       } catch {
         // Keep polling
@@ -227,6 +228,59 @@ export function FirstRun() {
         </div>
         <p className="text-lg font-semibold">Setup complete — launching Aloha</p>
       </div>
+    );
+  }
+
+  if (step === "welcome") {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center px-6 py-16">
+        <div className="w-full max-w-3xl space-y-10">
+          <div className="text-center space-y-2">
+            <div className="text-5xl">🌺</div>
+            <h1 className="text-3xl font-bold text-slate-100">
+              Welcome to <span className="text-sky-400">Aloha</span>
+            </h1>
+            <p className="text-slate-400">Your Home Assistant, driven by an AI agent. Two ways to start:</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-5">
+            <button
+              onClick={() => setStep("connect")}
+              className="text-left p-7 rounded-2xl bg-slate-800 border border-slate-700 hover:border-sky-500 hover:-translate-y-0.5 transition-all"
+            >
+              <div className="text-4xl mb-3">🔌</div>
+              <div className="text-lg font-semibold text-slate-100 mb-1">Use your own chatbot</div>
+              <p className="text-sm text-slate-400">
+                Point Claude, Cursor, or any MCP chatbot at Aloha and it can run your home.
+                Free — no AI key on the box.
+              </p>
+            </button>
+            <button
+              onClick={() => setStep("picker")}
+              className="text-left p-7 rounded-2xl bg-slate-800 hover:-translate-y-0.5 transition-all"
+              style={{
+                background:
+                  "linear-gradient(#1e293b,#1e293b) padding-box, linear-gradient(105deg,#ff7d5c,#ffb866) border-box",
+                border: "1.5px solid transparent",
+              }}
+            >
+              <div className="text-4xl mb-3">🤖</div>
+              <div className="text-lg font-semibold text-slate-100 mb-1">Let Aloha be your agent</div>
+              <p className="text-sm text-slate-400">
+                Chat right here. Sign in for the managed service (no API key), or bring your own AI key.
+              </p>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "connect") {
+    return (
+      <ConnectChatbot
+        onDone={() => window.location.replace("/")}
+        onBack={() => setStep("welcome")}
+      />
     );
   }
 
