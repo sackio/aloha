@@ -288,6 +288,7 @@ export function FirstRun() {
     return (
       <ProviderPicker
         onSelect={(provider, forceKey) => handleProviderSelect(provider, forceKey)}
+        onSuccess={handleSuccess}
       />
     );
   }

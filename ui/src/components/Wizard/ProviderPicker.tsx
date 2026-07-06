@@ -1,14 +1,14 @@
 /**
  * ProviderPicker.tsx
  *
- * Step 1 of the first-run wizard. Shows a 3x2 grid of provider cards.
- * Each card has: large emoji, name, tagline, auth badge.
- * A "I already have a key" text link at the bottom reveals a plain
- * API-key input for ad-hoc provider entry.
+ * "Let Aloha be your agent" step. Leads with the recommended no-key managed
+ * option (hero card), then a single simple bring-your-own-AI form below.
+ * Also exports the static PROVIDERS list used across the wizard.
  */
 
-import React, { useState } from "react";
+import React from "react";
 import { ProviderConfig } from "./FirstRun";
+import { ByokForm } from "./ByokForm";
 
 // ---------------------------------------------------------------------------
 // Static provider definitions
@@ -208,77 +208,13 @@ export const PROVIDERS: ProviderConfig[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Auth badge component
-// ---------------------------------------------------------------------------
-
-function AuthBadge({ badge }: { badge: ProviderConfig["authBadge"] }) {
-  const variants = {
-    oauth: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
-    key: "bg-sky-500/20 text-sky-300 border border-sky-500/30",
-    local: "bg-violet-500/20 text-violet-300 border border-violet-500/30",
-    managed: "bg-amber-500/20 text-amber-300 border border-amber-500/30",
-  };
-  const labels = { oauth: "OAuth", key: "API Key", local: "Local", managed: "Hosted" };
-
-  return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${variants[badge]}`}>
-      {labels[badge]}
-    </span>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Provider card
-// ---------------------------------------------------------------------------
-
-function ProviderCard({
-  provider,
-  onClick,
-}: {
-  provider: ProviderConfig;
-  onClick: () => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={`
-        relative flex flex-col items-start gap-3 p-5 rounded-xl text-left
-        bg-slate-800 border transition-all duration-150 cursor-pointer
-        ${hovered || provider.recommended
-          ? "border-sky-500 shadow-[0_0_0_2px_rgba(14,165,233,0.25)]"
-          : "border-slate-700"
-        }
-      `}
-    >
-      {provider.recommended && (
-        <span className="absolute -top-2 left-4 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-500 text-white">
-          ★ Recommended
-        </span>
-      )}
-      <div className="text-4xl select-none">{provider.emoji}</div>
-      <div className="flex-1 space-y-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-base font-semibold text-slate-100">
-            {provider.name}
-          </span>
-          <AuthBadge badge={provider.authBadge} />
-        </div>
-        <p className="text-sm text-slate-400">{provider.tagline}</p>
-      </div>
-    </button>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // ProviderPicker
 // ---------------------------------------------------------------------------
 
 interface ProviderPickerProps {
   onSelect: (provider: ProviderConfig, forceKey?: boolean) => void;
+  /** Called when the bring-your-own-key form finishes saving. */
+  onSuccess: () => void;
 }
 
 // Hero card for the recommended, no-key managed option.
@@ -305,13 +241,12 @@ function ManagedHero({ provider, onClick }: { provider: ProviderConfig; onClick:
   );
 }
 
-export function ProviderPicker({ onSelect }: ProviderPickerProps) {
+export function ProviderPicker({ onSelect, onSuccess }: ProviderPickerProps) {
   const managed = PROVIDERS.find((p) => p.id === "aloha")!;
-  const byo = PROVIDERS.filter((p) => p.id !== "aloha");
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center px-6 py-16">
-      <div className="w-full max-w-2xl space-y-8">
+      <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-slate-100">Let Aloha be your agent</h1>
@@ -321,20 +256,12 @@ export function ProviderPicker({ onSelect }: ProviderPickerProps) {
         {/* Primary: managed, no key */}
         <ManagedHero provider={managed} onClick={() => onSelect(managed)} />
 
-        {/* Secondary: bring your own AI key */}
+        {/* Secondary: bring your own AI — one simple form */}
         <div className="space-y-3">
           <div className="text-xs uppercase tracking-wide text-slate-500 text-center">
             or bring your own AI
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            {byo.map((provider) => (
-              <ProviderCard
-                key={provider.id}
-                provider={provider}
-                onClick={() => onSelect(provider)}
-              />
-            ))}
-          </div>
+          <ByokForm onSuccess={onSuccess} />
         </div>
       </div>
     </div>

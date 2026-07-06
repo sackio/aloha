@@ -8,6 +8,7 @@
 
 import React, { useState } from "react";
 import { useSettingsStore } from "../../stores/settings";
+import { PublicUrlPicker } from "./PublicUrlPicker";
 
 function Copy({ text }: { text: string }) {
   const [done, setDone] = useState(false);
@@ -36,7 +37,9 @@ function Snippet({ label, code }: { label: string; code: string }) {
 export function ConnectChatbot({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
   const setSetupComplete = useSettingsStore((s) => s.setSetupComplete);
   const origin = typeof window !== "undefined" ? window.location.origin : "http://aloha.local:7123";
-  const mcpUrl = `${origin}/mcp`;
+  const [publicUrl, setPublicUrl] = useState("");
+  // Prefer the public URL (reachable from the cloud) once one is live.
+  const mcpUrl = publicUrl || `${origin}/mcp`;
 
   async function finish() {
     try { await setSetupComplete(true); } catch { /* non-fatal */ }
@@ -54,7 +57,14 @@ export function ConnectChatbot({ onDone, onBack }: { onDone: () => void; onBack:
           </p>
         </div>
 
+        <PublicUrlPicker onUrl={setPublicUrl} />
+
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-5">
+          {publicUrl && (
+            <div className="text-xs text-emerald-300/80">
+              Using your public URL — paste these into a cloud chatbot.
+            </div>
+          )}
           <Snippet label="Your Aloha MCP endpoint" code={mcpUrl} />
           <Snippet label="Claude Code — one command" code={`claude mcp add --transport sse aloha ${mcpUrl}`} />
           <Snippet

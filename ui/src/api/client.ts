@@ -235,3 +235,32 @@ export function refreshContext(): Promise<{ ok: boolean; last_refreshed: string 
 export function getProviders(): Promise<ProviderInfo[]> {
   return request<ProviderInfo[]>("/api/providers");
 }
+
+// ---------------------------------------------------------------------------
+// Public MCP URL (relay / cloudflared / ngrok tunnels)
+// ---------------------------------------------------------------------------
+
+export interface PublicUrlStatus {
+  provider: "none" | "relay" | "cloudflared" | "ngrok";
+  url: string;
+  online: boolean;
+  error: string;
+}
+
+export function getPublicUrl(): Promise<PublicUrlStatus> {
+  return request<PublicUrlStatus>("/api/public-url");
+}
+
+export function setPublicUrl(
+  provider: "relay" | "cloudflared" | "ngrok",
+  ngrok_authtoken?: string,
+): Promise<PublicUrlStatus> {
+  return request<PublicUrlStatus>("/api/public-url", {
+    method: "POST",
+    body: JSON.stringify({ provider, ngrok_authtoken }),
+  });
+}
+
+export function disablePublicUrl(): Promise<PublicUrlStatus> {
+  return request<PublicUrlStatus>("/api/public-url/disable", { method: "POST" });
+}
