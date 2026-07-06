@@ -14,6 +14,7 @@ Usage
 
 from __future__ import annotations
 
+import base64
 import logging
 from pathlib import Path
 
@@ -79,18 +80,60 @@ def create_app(config: AlohaConfig) -> FastAPI:
     # -----------------------------------------------------------------------
     from aloha.mcp import auth as mcp_auth
 
+    def _mcp_authorized(request: Request) -> bool:
+        """Accept OAuth client credentials as HTTP Basic (key:secret), a Bearer
+        access token from /mcp/token, or X-Api-Key/X-Api-Secret headers."""
+        h = request.headers.get("authorization", "")
+        if h.startswith("Basic "):
+            try:
+                key, _, secret = base64.b64decode(h[6:]).decode().partition(":")
+                if mcp_auth.verify_pair(config.data_dir, key, secret):
+                    return True
+            except Exception:
+                pass
+        if h.startswith("Bearer ") and mcp_auth.verify_token(config.data_dir, h[7:].strip()):
+            return True
+        k = request.headers.get("x-api-key", "")
+        s = request.headers.get("x-api-secret", "")
+        return bool(k and s and mcp_auth.verify_pair(config.data_dir, k, s))
+
     @app.middleware("http")
     async def _mcp_auth(request: Request, call_next):
         path = request.url.path
-        if path == "/mcp" or path.startswith("/mcp/"):
-            if mcp_auth.any_keys(config.data_dir):
-                token = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
-                if not mcp_auth.verify(config.data_dir, token):
-                    return JSONResponse(
-                        {"error": "unauthorized",
-                         "message": "Valid MCP key required — send 'Authorization: Bearer <secret>'."},
-                        status_code=401)
+        # The token endpoint is how a client obtains auth — never gate it.
+        if path != "/mcp/token" and (path == "/mcp" or path.startswith("/mcp/")):
+            if mcp_auth.any_keys(config.data_dir) and not _mcp_authorized(request):
+                return JSONResponse(
+                    {"error": "unauthorized",
+                     "message": "MCP key + secret required — HTTP Basic (key:secret) or a "
+                                "Bearer token from POST /mcp/token."},
+                    status_code=401,
+                    headers={"WWW-Authenticate": 'Basic realm="aloha-mcp"'})
         return await call_next(request)
+
+    @app.post("/mcp/token")
+    async def mcp_token(request: Request):
+        """OAuth2 client-credentials token endpoint. Client id/secret via HTTP
+        Basic or form body; returns a short-lived Bearer access token."""
+        client_id = client_secret = ""
+        h = request.headers.get("authorization", "")
+        if h.startswith("Basic "):
+            try:
+                client_id, _, client_secret = base64.b64decode(h[6:]).decode().partition(":")
+            except Exception:
+                pass
+        try:
+            form = await request.form()
+        except Exception:
+            form = {}
+        grant = form.get("grant_type", "client_credentials")
+        client_id = client_id or form.get("client_id", "")
+        client_secret = client_secret or form.get("client_secret", "")
+        if grant != "client_credentials":
+            return JSONResponse({"error": "unsupported_grant_type"}, status_code=400)
+        if not mcp_auth.verify_pair(config.data_dir, client_id, client_secret):
+            return JSONResponse({"error": "invalid_client"}, status_code=401)
+        return JSONResponse(mcp_auth.issue_token(config.data_dir, client_id))
 
     # -----------------------------------------------------------------------
     # Include API routers

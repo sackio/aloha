@@ -39,15 +39,17 @@ export function ConnectChatbot({ onDone, onBack }: { onDone: () => void; onBack:
   const setSetupComplete = useSettingsStore((s) => s.setSetupComplete);
   const origin = typeof window !== "undefined" ? window.location.origin : "http://aloha.local:7123";
   const [publicUrl, setPublicUrl] = useState("");
-  const [mcpSecret, setMcpSecret] = useState("");
+  const [cred, setCred] = useState<{ key: string; secret: string } | null>(null);
   // Prefer the public URL (reachable from the cloud) once one is live.
   const mcpUrl = publicUrl || `${origin}/mcp`;
 
-  // Once an access key is minted, embed its secret in the copy-paste snippets.
+  // Once a credential is minted, embed its key+secret (HTTP Basic) in the snippets.
+  const basic = cred ? btoa(`${cred.key}:${cred.secret}`) : "";
+  const authHeader = cred ? `Authorization: Basic ${basic}` : "";
   const claudeCmd = `claude mcp add --transport sse aloha ${mcpUrl}` +
-    (mcpSecret ? ` --header "Authorization: Bearer ${mcpSecret}"` : "");
-  const jsonCfg = mcpSecret
-    ? `{\n  "mcpServers": {\n    "aloha": {\n      "url": "${mcpUrl}",\n      "type": "sse",\n      "headers": { "Authorization": "Bearer ${mcpSecret}" }\n    }\n  }\n}`
+    (cred ? ` --header "${authHeader}"` : "");
+  const jsonCfg = cred
+    ? `{\n  "mcpServers": {\n    "aloha": {\n      "url": "${mcpUrl}",\n      "type": "sse",\n      "headers": { "Authorization": "Basic ${basic}" }\n    }\n  }\n}`
     : `{\n  "mcpServers": {\n    "aloha": { "url": "${mcpUrl}", "type": "sse" }\n  }\n}`;
 
   async function finish() {
@@ -68,7 +70,7 @@ export function ConnectChatbot({ onDone, onBack }: { onDone: () => void; onBack:
 
         <PublicUrlPicker onUrl={setPublicUrl} />
 
-        <McpKeys onSecret={setMcpSecret} />
+        <McpKeys onCred={setCred} />
 
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-5">
           {publicUrl && (
@@ -82,9 +84,9 @@ export function ConnectChatbot({ onDone, onBack }: { onDone: () => void; onBack:
             label="Cursor / Claude Desktop / VS Code — mcp config"
             code={jsonCfg}
           />
-          {!mcpSecret && (
+          {!cred && (
             <div className="text-xs text-slate-500">
-              Tip: create an access key above and its secret drops into these snippets automatically.
+              Tip: create an access credential above and its key+secret drops into these snippets automatically.
             </div>
           )}
         </div>
