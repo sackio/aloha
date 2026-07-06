@@ -241,6 +241,41 @@ export function getProviders(): Promise<ProviderInfo[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Skills
+// ---------------------------------------------------------------------------
+
+export interface SkillInfo {
+  name: string;
+  category: string;
+  description: string;
+  editable: boolean;
+  url: string;
+}
+
+export function getSkills(): Promise<SkillInfo[]> {
+  return request<SkillInfo[]>("/api/skills");
+}
+
+export async function getSkillMarkdown(name: string): Promise<string> {
+  const res = await fetch(`/api/skills/${encodeURIComponent(name)}`);
+  if (!res.ok) throw new APIError(res.status, `HTTP ${res.status}`);
+  return res.text();
+}
+
+export function addSkill(name: string, content: string): Promise<{ ok: boolean; name: string }> {
+  return request<{ ok: boolean; name: string }>("/api/skills", {
+    method: "POST",
+    body: JSON.stringify({ name, content }),
+  });
+}
+
+export function deleteSkill(name: string): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>(`/api/skills/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Public MCP URL (relay / cloudflared / ngrok tunnels)
 // ---------------------------------------------------------------------------
 

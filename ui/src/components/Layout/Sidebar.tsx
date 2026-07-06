@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useChatStore, Session } from "../../stores/chat";
 import { useSettingsStore } from "../../stores/settings";
 import { SettingsPanel } from "../Settings/SettingsPanel";
+import { SkillsPanel } from "../Skills/SkillsPanel";
 
 // ---------------------------------------------------------------------------
 // Relative date helper
@@ -119,6 +120,7 @@ export function Sidebar({ showContextPanel, onToggleContext }: SidebarProps): Re
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showSkills, setShowSkills] = useState(false);
 
   const providerName = settings?.ai_provider
     ? settings.ai_provider.charAt(0).toUpperCase() + settings.ai_provider.slice(1)
@@ -216,6 +218,22 @@ export function Sidebar({ showContextPanel, onToggleContext }: SidebarProps): Re
           HA Context
         </button>
 
+        {/* Skills browser */}
+        <button
+          onClick={() => setShowSkills(true)}
+          className="
+            w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm
+            text-slate-400 hover:bg-slate-700/50 hover:text-slate-200
+            transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-sky-500
+            border border-transparent
+          "
+        >
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          Skills
+        </button>
+
         {/* Settings button + provider indicator */}
         <button
           onClick={() => setShowSettings(true)}
@@ -241,6 +259,9 @@ export function Sidebar({ showContextPanel, onToggleContext }: SidebarProps): Re
 
       {/* Settings modal */}
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+
+      {/* Skills modal */}
+      {showSkills && <SkillsPanel onClose={() => setShowSkills(false)} />}
     </div>
   );
 
