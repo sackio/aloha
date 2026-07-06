@@ -53,19 +53,44 @@ install from the **Local add-ons** repository:
 
 ## 4. Validate the Supervisor toolset
 
-From inside the running add-on container (where `SUPERVISOR_TOKEN` exists):
+There are two validators — pick based on how much fidelity you need.
+
+### 4a. Fast path — from outside the VM (no add-on install)
+
+`validate_via_ws.py` drives the **real** Supervisor without installing Aloha.
+HA Core holds its own Supervisor token and proxies Supervisor calls for admins
+over the authenticated WebSocket `supervisor/api` command (this is how the
+frontend's Supervisor panel works). The harness monkeypatches
+`supervisor.py`'s `_sup` to route through that proxy, then runs the **actual**
+tool dispatch — so it validates the real path construction, response unwrapping,
+and output formatting against a live Supervisor.
+
+```bash
+# after onboarding (step 2), with the admin LLAT:
+python3 validate_via_ws.py --url http://localhost:8125 --token <admin-LLAT>
+python3 validate_via_ws.py --with-backup   # also create + list a real backup
+```
+
+This is the quick, CI-friendly check. Two caveats, both inherent to the proxy:
+- `get_environment` reports the **harness host's** environment (it detects the
+  process it runs in), not the target box — ignore its `kind` here.
+- `get_addon_logs` is skipped: the Supervisor logs endpoint returns plain text,
+  which the JSON-only WS proxy can't carry. Covered by 4b instead.
+
+Verified against **HAOS 18.1 / Supervisor 2026.06.2 / Core 2026.7.1**: all read
+tools pass, `search_addons` lists the store, `install_addon` (core_ssh) works,
+`get_addon_info` on the installed add-on works, and `create_backup` +
+`list_backups` round-trip a real backup.
+
+### 4b. Full fidelity — inside the add-on container
+
+`validate_supervisor.py` runs where a real `SUPERVISOR_TOKEN` is injected, so it
+also exercises `get_addon_logs` and the true env detection (`kind="haos"`):
 
 ```bash
 docker exec -it addon_local_aloha python3 /path/to/validate_supervisor.py
-# or copy validate_supervisor.py in and run it; add --with-backup to also
-# create a real (harmless) backup and list it back.
+# add --with-backup to also create a real backup and list it back.
 ```
-
-It calls every read tool (`get_environment`, `get_supervisor_info`,
-`get_core_info`, `get_os_info`, `check_updates`, `list_addons`, `search_addons`,
-`list_backups`, plus `get_addon_info`/`get_addon_logs` for an installed add-on)
-and reports pass/fail. This confirms `supervisor.py` works against a live
-Supervisor API rather than only the built-to-spec assumption.
 
 ## Notes
 
