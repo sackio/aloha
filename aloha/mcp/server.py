@@ -67,7 +67,7 @@ def create_mcp_server(config: AlohaConfig) -> tuple[Server, SseServerTransport]:
         *sse_transport* — the SSE transport; mount at /mcp in FastAPI.
     """
     server = Server("aloha")
-    sse_transport = SseServerTransport("/mcp/messages")
+    sse_transport = SseServerTransport("/mcp/messages/")
 
     # ------------------------------------------------------------------
     # list_tools handler
@@ -135,7 +135,7 @@ def create_mcp_server(config: AlohaConfig) -> tuple[Server, SseServerTransport]:
             )
 
         try:
-            result = await execute_tool(name, arguments, ha_client)
+            result = await execute_tool(name, arguments, ha_client, config.ha_config_dir)
         except Exception as exc:
             log.warning("MCP tool %r raised: %s", name, exc)
             return CallToolResult(

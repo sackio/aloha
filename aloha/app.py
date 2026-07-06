@@ -100,21 +100,26 @@ def create_app(config: AlohaConfig) -> FastAPI:
     # -----------------------------------------------------------------------
     try:
         from aloha.mcp.server import create_mcp_server
-        from starlette.routing import Route
+        from starlette.responses import Response
+        from starlette.routing import Mount
 
         mcp_server, sse_transport = create_mcp_server(config)
 
         @app.get("/mcp")
         async def mcp_sse(request: Request):
-            """MCP SSE endpoint for external AI clients."""
-            return await sse_transport.handle_sse(request, mcp_server)
+            """MCP SSE endpoint for external AI clients (Claude Code, Cursor, …)."""
+            async with sse_transport.connect_sse(
+                request.scope, request.receive, request._send
+            ) as (read_stream, write_stream):
+                await mcp_server.run(
+                    read_stream, write_stream, mcp_server.create_initialization_options()
+                )
+            return Response()
 
-        @app.post("/mcp/messages")
-        async def mcp_messages(request: Request):
-            """MCP message POST endpoint."""
-            return await sse_transport.handle_post_message(request, mcp_server)
+        # Client→server message channel (ASGI mount at the path the transport advertises).
+        app.router.routes.append(Mount("/mcp/messages/", app=sse_transport.handle_post_message))
 
-        log.info("MCP server mounted at /mcp")
+        log.info("MCP server mounted at /mcp (SSE)")
     except Exception as exc:
         log.warning("Could not mount MCP server: %s", exc)
 
