@@ -80,6 +80,7 @@ class AlohaConfig(BaseSettings):
     _api_key_enc: Optional[str] = None   # private; not a pydantic field
     _ha_token_enc: Optional[str] = None  # private; not a pydantic field
     _ngrok_authtoken_enc: Optional[str] = None  # private; not a pydantic field
+    _relay_token_enc: Optional[str] = None  # private; Aloha account token for the relay tunnel
 
     # ---------------------------------------------------------------------------
     # api_key property
@@ -135,6 +136,22 @@ class AlohaConfig(BaseSettings):
             self._ngrok_authtoken_enc = encrypt(value, self._fernet_key())
 
     # ---------------------------------------------------------------------------
+    # relay_token property (Aloha account token for the $1/mo relay tunnel)
+    # ---------------------------------------------------------------------------
+    @property
+    def relay_token(self) -> Optional[str]:
+        if self._relay_token_enc is None:
+            return None
+        return decrypt(self._relay_token_enc, self._fernet_key())
+
+    @relay_token.setter
+    def relay_token(self, value: Optional[str]) -> None:
+        if not value:
+            self._relay_token_enc = None
+        else:
+            self._relay_token_enc = encrypt(value, self._fernet_key())
+
+    # ---------------------------------------------------------------------------
     # Internal helpers
     # ---------------------------------------------------------------------------
     def _fernet_key(self) -> bytes:
@@ -168,6 +185,7 @@ class AlohaConfig(BaseSettings):
             api_key_enc = raw.pop("api_key_enc", None)
             ha_token_enc = raw.pop("ha_token_enc", None)
             ngrok_authtoken_enc = raw.pop("ngrok_authtoken_enc", None)
+            relay_token_enc = raw.pop("relay_token_enc", None)
 
             # Re-create with merged values (env vars still win)
             merged = {**raw, **{
@@ -183,6 +201,7 @@ class AlohaConfig(BaseSettings):
             instance._api_key_enc = api_key_enc
             instance._ha_token_enc = ha_token_enc
             instance._ngrok_authtoken_enc = ngrok_authtoken_enc
+            instance._relay_token_enc = relay_token_enc
 
         # Credentials are encrypted *properties*, not pydantic fields, so they
         # are never populated by the env-var overlay above. Apply them here via
@@ -207,7 +226,7 @@ class AlohaConfig(BaseSettings):
         config_path = self.data_dir / "config.json"
 
         data = self.model_dump(
-            exclude={"api_key", "ha_token", "ngrok_authtoken"},
+            exclude={"api_key", "ha_token", "ngrok_authtoken", "relay_token"},
             mode="json",
         )
         # Serialize Path objects
@@ -221,6 +240,8 @@ class AlohaConfig(BaseSettings):
             data["ha_token_enc"] = self._ha_token_enc
         if self._ngrok_authtoken_enc is not None:
             data["ngrok_authtoken_enc"] = self._ngrok_authtoken_enc
+        if self._relay_token_enc is not None:
+            data["relay_token_enc"] = self._relay_token_enc
 
         with config_path.open("w") as f:
             json.dump(data, f, indent=2)

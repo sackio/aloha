@@ -101,6 +101,9 @@ def create_app(config: AlohaConfig) -> FastAPI:
     from aloha.routes.public_url_route import router as public_url_router
     app.include_router(public_url_router)
 
+    from aloha.routes.relay_account import router as relay_account_router
+    app.include_router(relay_account_router)
+
     # -----------------------------------------------------------------------
     # Public MCP URL manager (relay / cloudflared / ngrok) — lets a box behind
     # NAT expose /mcp to cloud chatbots. Auto-starts if a provider is configured.
@@ -117,7 +120,8 @@ def create_app(config: AlohaConfig) -> FastAPI:
     async def _start_public_url() -> None:
         if config.public_url_provider and config.public_url_provider != "none":
             log.info("Starting public MCP URL via %s", config.public_url_provider)
-            relay_token = config.api_key or "" if config.ai_provider == "aloha" else ""
+            relay_token = (config.relay_token or "") or (
+                config.api_key or "" if config.ai_provider == "aloha" else "")
             await app.state.public_url_manager.start(
                 config.public_url_provider, config.ngrok_authtoken or "", relay_token
             )

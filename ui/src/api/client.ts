@@ -303,3 +303,25 @@ export function setPublicUrl(
 export function disablePublicUrl(): Promise<PublicUrlStatus> {
   return request<PublicUrlStatus>("/api/public-url/disable", { method: "POST" });
 }
+
+// ---------------------------------------------------------------------------
+// Aloha relay account ($1/mo tunnel subscription)
+// ---------------------------------------------------------------------------
+
+export interface RelayStatus { has_account: boolean; entitled: boolean }
+
+export function relayStatus(): Promise<RelayStatus> {
+  return request<RelayStatus>("/api/relay/status");
+}
+
+export function relaySignup(email: string, password: string): Promise<{ ok: boolean }> {
+  return request("/api/relay/signup", { method: "POST", body: JSON.stringify({ email, password }) });
+}
+
+export function relayLogin(email: string, password: string): Promise<{ ok: boolean }> {
+  return request("/api/relay/login", { method: "POST", body: JSON.stringify({ email, password }) });
+}
+
+export function relaySubscribe(): Promise<{ url: string }> {
+  return request<{ url: string }>("/api/relay/subscribe", { method: "POST" });
+}

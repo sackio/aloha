@@ -14,6 +14,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from aloha.config import AlohaConfig
+
 router = APIRouter(prefix="/api/public-url", tags=["public-url"])
 
 
@@ -24,10 +26,10 @@ class EnableRequest(BaseModel):
 
 def _relay_token(config) -> str:
     """The relay tunnel (paid tier) authenticates with the box's Aloha account
-    token. When the box uses the managed AI tier, api_key IS that account token."""
-    if getattr(config, "ai_provider", "") == "aloha":
-        return config.api_key or ""
-    return ""
+    token. Prefer the dedicated relay_token; fall back to api_key when the box
+    is on the managed AI tier (same account)."""
+    return (getattr(config, "relay_token", "") or "") or (
+        config.api_key or "" if getattr(config, "ai_provider", "") == "aloha" else "")
 
 
 @router.get("")
@@ -38,7 +40,9 @@ async def get_status(request: Request) -> JSONResponse:
 
 @router.post("")
 async def enable(req: EnableRequest, request: Request) -> JSONResponse:
-    config = request.app.state.config
+    # Load fresh from disk so we don't clobber fields written by other routes
+    # (e.g. relay_token from the relay sign-in). The manager stays on app.state.
+    config = AlohaConfig.load()
     mgr = request.app.state.public_url_manager
 
     if req.ngrok_authtoken is not None:
@@ -61,7 +65,7 @@ async def enable(req: EnableRequest, request: Request) -> JSONResponse:
 
 @router.post("/disable")
 async def disable(request: Request) -> JSONResponse:
-    config = request.app.state.config
+    config = AlohaConfig.load()
     mgr = request.app.state.public_url_manager
     await mgr.stop()
     config.public_url_provider = "none"

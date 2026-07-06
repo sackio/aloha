@@ -8,6 +8,7 @@
 
 import React, { useEffect, useState } from "react";
 import { getPublicUrl, setPublicUrl, disablePublicUrl, PublicUrlStatus } from "../../api/client";
+import { RelaySubscribe } from "./RelaySubscribe";
 
 type Provider = "cloudflared" | "ngrok" | "relay";
 
@@ -17,7 +18,7 @@ const OPTIONS: Array<{ id: Provider; emoji: string; title: string; blurb: string
   { id: "ngrok", emoji: "🔗", title: "ngrok", tag: "Your account",
     blurb: "Bring your own ngrok authtoken." },
   { id: "relay", emoji: "🌺", title: "Aloha relay", tag: "$1/mo",
-    blurb: "Stable branded URL. Nothing to install or sign up for." },
+    blurb: "Stable branded URL, nothing to install. Cancel anytime." },
 ];
 
 // Static design preview (preview.html) has no backend — simulate so the flow
@@ -34,6 +35,7 @@ export function PublicUrlPicker({ onUrl }: { onUrl?: (url: string) => void }) {
   const [busy, setBusy] = useState<Provider | null>(null);
   const [ngrokTok, setNgrokTok] = useState("");
   const [showNgrok, setShowNgrok] = useState(false);
+  const [relayFlow, setRelayFlow] = useState(false);
   const [err, setErr] = useState("");
 
   useEffect(() => {
@@ -45,13 +47,21 @@ export function PublicUrlPicker({ onUrl }: { onUrl?: (url: string) => void }) {
   async function choose(p: Provider) {
     setErr("");
     if (p === "ngrok" && !showNgrok) { setShowNgrok(true); return; }
-    setBusy(p);
     if (DEMO) {
+      setBusy(p);
       await new Promise((r) => setTimeout(r, 500));
       const s: PublicUrlStatus = { provider: p, url: DEMO_URL[p], online: true, error: "" };
       setStatus(s); onUrl?.(s.url); setBusy(null);
       return;
     }
+    // The relay is paid — run the sign-up/subscribe flow first; it calls
+    // startProvider("relay") once the account is entitled.
+    if (p === "relay") { setRelayFlow(true); return; }
+    await startProvider(p);
+  }
+
+  async function startProvider(p: Provider) {
+    setBusy(p); setRelayFlow(false);
     try {
       const s = await setPublicUrl(p, p === "ngrok" ? ngrokTok.trim() : undefined);
       setStatus(s);
@@ -108,6 +118,10 @@ export function PublicUrlPicker({ onUrl }: { onUrl?: (url: string) => void }) {
             </button>
           ))}
         </div>
+      )}
+
+      {relayFlow && !active && (
+        <RelaySubscribe onEntitled={() => startProvider("relay")} onCancel={() => setRelayFlow(false)} />
       )}
 
       {showNgrok && !active && (
