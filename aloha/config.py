@@ -65,6 +65,10 @@ class AlohaConfig(BaseSettings):
     managed_relay_url: str = "https://aloha.pushbuild.com"
     managed_model: str = "anthropic/claude-sonnet-4.6"
 
+    # Public MCP URL: how the box exposes its /mcp to cloud chatbots behind NAT.
+    #   none | relay (our $1/mo tunnel) | cloudflared (free) | ngrok (BYOK token)
+    public_url_provider: Literal["none", "relay", "cloudflared", "ngrok"] = "none"
+
     # Setup wizard completion flag
     setup_complete: bool = False
 
@@ -75,6 +79,7 @@ class AlohaConfig(BaseSettings):
     # ---------------------------------------------------------------------------
     _api_key_enc: Optional[str] = None   # private; not a pydantic field
     _ha_token_enc: Optional[str] = None  # private; not a pydantic field
+    _ngrok_authtoken_enc: Optional[str] = None  # private; not a pydantic field
 
     # ---------------------------------------------------------------------------
     # api_key property
@@ -113,6 +118,23 @@ class AlohaConfig(BaseSettings):
             self._ha_token_enc = encrypt(value, self._fernet_key())
 
     # ---------------------------------------------------------------------------
+    # ngrok_authtoken property (BYOK public-URL tunnel)
+    # ---------------------------------------------------------------------------
+    @property
+    def ngrok_authtoken(self) -> Optional[str]:
+        """Return plaintext ngrok authtoken by decrypting stored ciphertext."""
+        if self._ngrok_authtoken_enc is None:
+            return None
+        return decrypt(self._ngrok_authtoken_enc, self._fernet_key())
+
+    @ngrok_authtoken.setter
+    def ngrok_authtoken(self, value: Optional[str]) -> None:
+        if not value:
+            self._ngrok_authtoken_enc = None
+        else:
+            self._ngrok_authtoken_enc = encrypt(value, self._fernet_key())
+
+    # ---------------------------------------------------------------------------
     # Internal helpers
     # ---------------------------------------------------------------------------
     def _fernet_key(self) -> bytes:
@@ -145,6 +167,7 @@ class AlohaConfig(BaseSettings):
             # Extract encrypted credential blobs before pydantic sees them
             api_key_enc = raw.pop("api_key_enc", None)
             ha_token_enc = raw.pop("ha_token_enc", None)
+            ngrok_authtoken_enc = raw.pop("ngrok_authtoken_enc", None)
 
             # Re-create with merged values (env vars still win)
             merged = {**raw, **{
@@ -159,6 +182,7 @@ class AlohaConfig(BaseSettings):
 
             instance._api_key_enc = api_key_enc
             instance._ha_token_enc = ha_token_enc
+            instance._ngrok_authtoken_enc = ngrok_authtoken_enc
 
         # Credentials are encrypted *properties*, not pydantic fields, so they
         # are never populated by the env-var overlay above. Apply them here via
@@ -183,7 +207,7 @@ class AlohaConfig(BaseSettings):
         config_path = self.data_dir / "config.json"
 
         data = self.model_dump(
-            exclude={"api_key", "ha_token"},
+            exclude={"api_key", "ha_token", "ngrok_authtoken"},
             mode="json",
         )
         # Serialize Path objects
@@ -195,6 +219,8 @@ class AlohaConfig(BaseSettings):
             data["api_key_enc"] = self._api_key_enc
         if self._ha_token_enc is not None:
             data["ha_token_enc"] = self._ha_token_enc
+        if self._ngrok_authtoken_enc is not None:
+            data["ngrok_authtoken_enc"] = self._ngrok_authtoken_enc
 
         with config_path.open("w") as f:
             json.dump(data, f, indent=2)
