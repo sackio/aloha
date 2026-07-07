@@ -17,12 +17,12 @@ def test_defaults(config):
 
 
 def test_api_key_encrypted_round_trip(config):
-    config.api_key = "sk-secret-abc123"
+    config.api_key = "DUMMY-not-a-real-key"
     config.save()
     reloaded = AlohaConfig.load()
-    assert reloaded.api_key == "sk-secret-abc123"
+    assert reloaded.api_key == "DUMMY-not-a-real-key"
     raw = _cfg_json(config)
-    assert "sk-secret-abc123" not in json.dumps(raw)  # never plaintext
+    assert "DUMMY-not-a-real-key" not in json.dumps(raw)  # never plaintext
     assert "api_key_enc" in raw
 
 
