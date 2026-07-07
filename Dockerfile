@@ -4,7 +4,10 @@ WORKDIR /ui
 COPY ui/package.json ui/package-lock.json* ./
 RUN npm install
 COPY ui/ .
-RUN npm run build
+# vite.config.ts writes the build to ../aloha/static (handy for run-from-source);
+# in this stage that resolves to /aloha/static. Also expose it at /ui/dist so the
+# final stage's COPY has a predictable path regardless of the vite outDir.
+RUN npm run build && cp -r /aloha/static /ui/dist
 
 # Stage 2: Final image — HA base with Aloha layered on top
 # Entrypoint is inherited from the HA base image (s6-overlay)
