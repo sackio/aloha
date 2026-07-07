@@ -32,7 +32,7 @@ aarch64, …) with Raspberry Pi Imager, then add the Aloha add-on.
 
 ## Docker image
 
-See [`docker/`](docker/). Multi-arch (amd64/arm64/armv7), built + pushed to
+See [`docker/`](docker/). Multi-arch (amd64/arm64), built + pushed to
 `ghcr.io/sackio/aloha` by CI on a `v*` tag. Confirmed via `docker/confirm.sh`.
 
 ## Adding the Aloha add-on to any HAOS

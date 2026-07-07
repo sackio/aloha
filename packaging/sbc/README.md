@@ -14,6 +14,6 @@ the full appliance (Supervisor, backups, OTA OS updates) with Aloha managing it.
    `https://github.com/sackio/aloha`.
 4. Install **Aloha** → **Start**.
 
-The Aloha add-on image is multi-arch (`aarch64`, `armv7`), so it runs natively on
+The Aloha add-on image is multi-arch (`aarch64`), so it runs natively on
 the Pi. Same add-on as the VM — see [`../vm/`](../vm/) for the automated HAOS
 confirm (arm boards get their final sign-off on real hardware).

@@ -32,4 +32,3 @@ image: "ghcr.io/sackio/aloha-addon:{arch}"
 arch:
   - amd64
   - aarch64
-  - armv7
