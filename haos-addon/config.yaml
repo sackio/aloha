@@ -14,8 +14,7 @@ ingress_port: 7123
 panel_icon: mdi:robot-love
 panel_title: Aloha
 map:
-  - config:rw
-  - data:rw
+  - homeassistant_config:rw
 ports:
   7123/tcp: 7123
 options:
