@@ -70,7 +70,14 @@ async def main():
             await asyncio.sleep(5)
         print("resolved add-on slug:", slug)
         if not slug:
-            print("add-on not found in store"); sys.exit(1)
+            print("add-on not found in store — dumping diagnostics:")
+            res = await sup(ws, nxt(), "/resolution/info")
+            issues = res.get("result", {}).get("issues", []) if res.get("success") else res
+            print(" resolution issues:", json.dumps(issues)[:600])
+            store = await sup(ws, nxt(), "/store/addons")
+            adds = store.get("result", {}); adds = adds.get("addons", adds) if isinstance(adds, dict) else adds
+            print(" sample store slugs:", [a.get("slug") for a in (adds or [])][:8])
+            sys.exit(1)
 
         print(f"installing add-on '{slug}' (pulls the image)…")
         r = await sup(ws, nxt(), f"/store/addons/{slug}/install", "post")
