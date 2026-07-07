@@ -19,14 +19,14 @@ map:
 ports:
   7123/tcp: 7123
 options:
-  ai_provider: claude
+  ai_provider: anthropic
   model: auto
-  safety_mode: supervised
+  safety_mode: normal
   context_refresh_minutes: 5
 schema:
-  ai_provider: list(claude|openai|gemini|ollama|openrouter|groq|custom)
+  ai_provider: list(anthropic|openai|gemini|ollama|openrouter|groq|custom|aloha)
   model: str
-  safety_mode: list(supervised|autonomous)
+  safety_mode: list(strict|normal|permissive)
   context_refresh_minutes: int(1,60)
 image: "ghcr.io/sackio/aloha-addon:{arch}"
 arch:

@@ -1,0 +1,9 @@
+# Add-on build config: the base image per arch. We use the Home Assistant
+# python base (Alpine + Python 3.12) so pip can install Aloha's deps from wheels.
+build_from:
+  amd64: ghcr.io/home-assistant/amd64-base-python:3.12-alpine3.18
+  aarch64: ghcr.io/home-assistant/aarch64-base-python:3.12-alpine3.18
+  armv7: ghcr.io/home-assistant/armv7-base-python:3.12-alpine3.18
+labels:
+  org.opencontainers.image.source: https://github.com/sackio/aloha
+  org.opencontainers.image.licenses: MIT
