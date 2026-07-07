@@ -95,7 +95,6 @@ frontend/*.local
 frontend/.vite/
 
 # Docker
-.dockerignore
 
 # Data / runtime
 /data/

@@ -1,0 +1,14 @@
+.git
+.github
+.gitignore
+**/__pycache__/
+**/*.pyc
+ui/node_modules
+ui/dist
+test/
+data/
+*.log
+.env
+.venv
+.claude
+ALOHA-BUILD-CONTEXT.md

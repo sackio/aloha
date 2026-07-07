@@ -2,7 +2,7 @@
  * FirstRun.tsx
  *
  * Main first-run wizard shell. Drives a state machine through setup steps:
- *   loading -> picker -> oauth | key_wizard | ollama -> complete
+ *   loading -> welcome -> connect (MCP) | picker (managed / bring-your-own-key)
  *
  * On mount: GET /health.
  *   - setup_complete=true  -> redirect to main chat (replace history)
@@ -13,9 +13,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getHealth, HealthResponse } from "../../api/client";
 import { ProviderPicker } from "./ProviderPicker";
-import { OAuthFlow } from "./OAuthFlow";
-import { KeyWizard } from "./KeyWizard";
-import { OllamaSetup } from "./OllamaSetup";
 import { ManagedSignIn } from "./ManagedSignIn";
 import { ConnectChatbot } from "./ConnectChatbot";
 
@@ -23,25 +20,15 @@ import { ConnectChatbot } from "./ConnectChatbot";
 // Types
 // ---------------------------------------------------------------------------
 
-type WizardStep = "loading" | "welcome" | "connect" | "picker" | "oauth" | "key_wizard" | "ollama" | "managed" | "complete";
+type WizardStep = "loading" | "welcome" | "connect" | "picker" | "managed" | "complete";
 
 export interface ProviderConfig {
   id: "anthropic" | "openai" | "gemini" | "ollama" | "openrouter" | "groq" | "custom" | "aloha";
   name: string;
   emoji: string;
-  tagline: string;
-  authBadge: "oauth" | "key" | "local" | "managed";
-  /** Featured/recommended provider — highlighted in the picker grid */
-  recommended?: boolean;
   requires_api_key: boolean;
   models: string[];
   default_model: string;
-  // Steps shown in KeyWizard for API-key providers
-  steps: Array<{
-    title: string;
-    instruction: string;
-    url?: string;
-  }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -107,8 +94,6 @@ function HAStartupScreen() {
 
 export function FirstRun() {
   const [step, setStep] = useState<WizardStep>("loading");
-  const [selectedProvider, setSelectedProvider] = useState<ProviderConfig | null>(null);
-  const [useKey, setUseKey] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopPoll = useCallback(() => {
@@ -182,21 +167,14 @@ export function FirstRun() {
   useEffect(() => () => stopPoll(), [stopPoll]);
 
   // ---------------------------------------------------------------------------
-  // Provider selected callback from ProviderPicker
+  // Provider selected callback from ProviderPicker. Bring-your-own-key providers
+  // are handled inline by the picker's form (onSuccess); the only selection that
+  // routes to a further step is the managed tier.
   // ---------------------------------------------------------------------------
 
-  function handleProviderSelect(provider: ProviderConfig, forceKey = false) {
-    setSelectedProvider(provider);
-    setUseKey(forceKey);
-
+  function handleProviderSelect(provider: ProviderConfig) {
     if (provider.id === "aloha") {
       setStep("managed");
-    } else if (provider.id === "ollama") {
-      setStep("ollama");
-    } else if (forceKey || provider.authBadge !== "oauth") {
-      setStep("key_wizard");
-    } else {
-      setStep("oauth");
     }
   }
 
@@ -287,41 +265,8 @@ export function FirstRun() {
   if (step === "picker") {
     return (
       <ProviderPicker
-        onSelect={(provider, forceKey) => handleProviderSelect(provider, forceKey)}
+        onSelect={handleProviderSelect}
         onSuccess={handleSuccess}
-      />
-    );
-  }
-
-  if (step === "oauth" && selectedProvider) {
-    return (
-      <OAuthFlow
-        provider={selectedProvider}
-        onSuccess={handleSuccess}
-        onBack={() => setStep("picker")}
-        onUseKey={() => {
-          setUseKey(true);
-          setStep("key_wizard");
-        }}
-      />
-    );
-  }
-
-  if (step === "key_wizard" && selectedProvider) {
-    return (
-      <KeyWizard
-        provider={selectedProvider}
-        onSuccess={handleSuccess}
-        onBack={() => setStep("picker")}
-      />
-    );
-  }
-
-  if (step === "ollama") {
-    return (
-      <OllamaSetup
-        onSuccess={handleSuccess}
-        onBack={() => setStep("picker")}
       />
     );
   }

@@ -45,9 +45,12 @@ def create_app(config: AlohaConfig) -> FastAPI:
       - /api/sessions     (session CRUD)
       - /api/chat         (SSE chat stream)
       - /api/approve      (diff approval)
-      - /auth/{p}/start   (OAuth start)
-      - /auth/{p}/callback (OAuth callback)
-      - /mcp              (MCP SSE server)
+      - /api/public-url   (relay / cloudflared / ngrok tunnels)
+      - /api/relay        (managed relay account + $1/mo subscription)
+      - /api/mcp-keys     (MCP access credentials)
+      - /api/skills       (skill library browse/manage)
+      - /mcp              (MCP SSE server, key+secret auth)
+      - /mcp/token        (OAuth2 client-credentials token endpoint)
       - /                 (React SPA static files)
 
     Parameters
@@ -150,9 +153,6 @@ def create_app(config: AlohaConfig) -> FastAPI:
 
     from aloha.routes.chat import router as chat_router
     app.include_router(chat_router)
-
-    from aloha.routes.oauth_routes import router as oauth_router
-    app.include_router(oauth_router)
 
     from aloha.routes.managed import router as managed_router
     app.include_router(managed_router)
