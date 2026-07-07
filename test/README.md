@@ -1,4 +1,24 @@
-# Aloha test fixtures
+# Aloha tests
+
+## Test suite
+
+```bash
+pip install -e ".[dev]"      # pytest + pytest-asyncio
+pytest                       # unit + integration (fast, no HA, no network)
+./test/smoke.sh              # end-to-end against a real box process + stub HA
+```
+
+- **`unit/`** — pure logic: config encryption round-trips, MCP auth (key+secret,
+  token endpoint, lifecycle), skill loader, tool registry (no duplicate names),
+  environment detection, public-URL manager, relay-tunnel client.
+- **`integration/`** — the FastAPI app in-process (Starlette TestClient, no live
+  HA): health, skills CRUD, MCP-key lifecycle + `/mcp` auth enforcement, the
+  OAuth2 token endpoint, public-URL + relay status, MCP server construction.
+- **`smoke.sh`** — boots the **real** box process against a stub HA and drives
+  the whole surface with curl, including the SSE `/mcp` endpoint with key+secret
+  auth (which the in-process suite can't reach). Also serves as a demo routine.
+
+## Fixtures
 
 Reproducible throwaway environments for testing Aloha against the two install
 types it supports. Aloha is **environment-aware**: it detects whether it's on
