@@ -1,0 +1,15 @@
+# Aloha — bundled Home Assistant + agent in one container.
+#   docker compose -f packaging/docker/docker-compose.yml up -d
+services:
+  aloha:
+    image: ghcr.io/sackio/aloha:latest
+    container_name: aloha
+    restart: unless-stopped
+    ports:
+      - "8123:8123"   # Home Assistant
+      - "7123:7123"   # Aloha agent UI + MCP
+    volumes:
+      - aloha-data:/data
+
+volumes:
+  aloha-data:
