@@ -13,6 +13,10 @@ on:
       - "ui/**"
       - "requirements.txt"
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
