@@ -38,14 +38,22 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Version (strip leading v from the tag)
+        id: v
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      # HA convention: the add-on config's image is "…/{arch}-aloha-addon" and the
+      # Supervisor pulls "{image}:{version}". So publish per-arch image NAMES with
+      # the add-on version as the tag (plus :latest).
       - name: Build (and push on tag) the ${{ matrix.arch }} add-on image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: haos-addon/Dockerfile
           build-args: BUILD_FROM=${{ matrix.base }}
-          platforms: ${{ matrix.arch == 'armv7' && 'linux/arm/v7' || format('linux/{0}', matrix.arch == 'aarch64' && 'arm64' || 'amd64') }}
+          platforms: ${{ format('linux/{0}', matrix.arch == 'aarch64' && 'arm64' || 'amd64') }}
           push: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
-          tags: ghcr.io/sackio/aloha-addon:${{ matrix.arch }}
+          tags: |
+            ghcr.io/sackio/${{ matrix.arch }}-aloha-addon:${{ steps.v.outputs.version }}
+            ghcr.io/sackio/${{ matrix.arch }}-aloha-addon:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -27,7 +27,7 @@ schema:
   model: str
   safety_mode: list(strict|normal|permissive)
   context_refresh_minutes: int(1,60)
-image: "ghcr.io/sackio/aloha-addon:{arch}"
+image: "ghcr.io/sackio/{arch}-aloha-addon"
 arch:
   - amd64
   - aarch64
