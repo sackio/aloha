@@ -5,11 +5,11 @@
 #   docker run -d \
 #     -v aloha-data:/data \
 #     -p 8123:8123 -p 7123:7123 \
-#     ghcr.io/aloha-ha/aloha:latest
+#     ghcr.io/sackio/aloha:latest
 
 services:
   aloha:
-    image: ghcr.io/aloha-ha/aloha:latest
+    image: ghcr.io/sackio/aloha:latest
     environment:
       ALOHA_MODE: standalone
       HA_URL: "http://homeassistant.local:8123"

@@ -10,7 +10,7 @@ Aloha is an AI-powered chat agent that lives inside your Home Assistant. Talk to
 2. Click the menu (three dots, top right) and select **Repositories**.
 3. Add the Aloha repository URL:
    ```
-   https://github.com/aloha-ha/aloha-addon
+   https://github.com/sackio/aloha
    ```
 4. Find **Aloha** in the add-on store and click **Install**.
 5. After installation, go to the **Configuration** tab and set your preferred AI provider and options.
