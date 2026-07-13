@@ -55,6 +55,12 @@ async def main() -> None:
         config.port,
     )
 
+    # Opt-in error reporting (no-op unless the operator set a DSN). Also installs
+    # the in-memory log ring used by the "report a problem" flow.
+    from aloha import telemetry
+
+    telemetry.init_error_reporting(config)
+
     # -----------------------------------------------------------------------
     # 2. Bootstrap HA connection
     # -----------------------------------------------------------------------

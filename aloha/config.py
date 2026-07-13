@@ -72,6 +72,11 @@ class AlohaConfig(BaseSettings):
     # Setup wizard completion flag
     setup_complete: bool = False
 
+    # Opt-in error reporting (Sentry). Empty = OFF; nothing is ever sent off-box.
+    # Set to a Sentry DSN (or env ALOHA_ERROR_REPORTING_DSN) to enable. Events are
+    # scrubbed of secrets before send. See aloha/telemetry.py and docs/BETA.md.
+    error_reporting_dsn: str = ""
+
     # ---------------------------------------------------------------------------
     # Encrypted credential storage
     # These fields hold ciphertext when loaded from disk; they are never exposed

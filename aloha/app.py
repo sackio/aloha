@@ -169,6 +169,9 @@ def create_app(config: AlohaConfig) -> FastAPI:
     from aloha.routes.mcp_keys_route import router as mcp_keys_router
     app.include_router(mcp_keys_router)
 
+    from aloha.routes.report_route import router as report_router
+    app.include_router(report_router)
+
     # -----------------------------------------------------------------------
     # Public MCP URL manager (relay / cloudflared / ngrok) — lets a box behind
     # NAT expose /mcp to cloud chatbots. Auto-starts if a provider is configured.

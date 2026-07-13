@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest an idea or improvement for Aloha
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem or use case?
+      description: What are you trying to do that Aloha doesn't (do well) today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to see?
+      description: Describe the feature or change. A new skill? A new tool? A UI change?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Anything you've tried or other ways this could work.

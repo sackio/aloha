@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/sackio/aloha/tree/main/docs
+    about: User guide, troubleshooting, MCP tool reference, and the beta guide.
+  - name: 💬 Questions & the managed tier
+    url: https://aloha.pushbuild.com
+    about: General questions, feedback, or interest in Aloha managed.

@@ -64,7 +64,7 @@ Already running Home Assistant? Point Aloha at it instead of bundling one:
 ```bash
 docker run -d --name aloha -p 7123:7123 \
   -e ALOHA_MODE=standalone -e ALOHA_HA_URL=http://your-ha:8123 \
-  -v aloha-data:/data ghcr.io/sackio/aloha:latest   # prebuilt images coming soon
+  -v aloha-data:/data ghcr.io/sackio/aloha:latest
 ```
 
 Also ships as a **Home Assistant OS add-on** (`haos-addon/`) — Supervisor injects
@@ -125,16 +125,30 @@ Provider-agnostic agent loop, multi-step tool use, and a diff→approve safety g
 
 ---
 
+## Documentation
+
+- **[User guide](docs/USER_GUIDE.md)** — install → first run → everyday use →
+  skills → public MCP URL → connecting an IDE.
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** — common issues and fixes.
+- **[MCP tool reference](docs/MCP_TOOLS.md)** — all 104 tools (auto-generated).
+- **[Beta guide](docs/BETA.md)** — joining the closed beta + opt-in error reporting.
+- **[Contributing](CONTRIBUTING.md)** · **[Changelog](CHANGELOG.md)**
+
 ## Status
 
-Aloha is under active development. The agent, tools, skills, MCP support, and the
-Docker/standalone/add-on paths work today; prebuilt multi-arch images, the
-Raspberry Pi image, and the managed tier are in progress.
+Aloha is a functional **v0.1.0 pre-release**. The agent, tools, skills, MCP
+support, and every install path work today, and multi-arch images are published:
+the Docker image (`ghcr.io/sackio/aloha`) and the HAOS add-on
+(`ghcr.io/sackio/{amd64,aarch64}-aloha-addon`) — the add-on is verified
+end-to-end on real Home Assistant OS. Still maturing: real-world soak across many
+homes, real-hardware Raspberry Pi sign-off, and the managed tier's billing
+go-live. See the **[beta guide](docs/BETA.md)** to help.
 
 ## Contributing
 
-Issues and PRs welcome. Skills are just markdown files in `aloha/skills/library/` —
-adding one is a great first contribution.
+Issues and PRs welcome — see **[CONTRIBUTING.md](CONTRIBUTING.md)**. Skills are
+just markdown files in `aloha/skills/library/`; adding one is a great first
+contribution.
 
 ## Contact
 

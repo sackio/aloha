@@ -1,0 +1,59 @@
+name: Bug report
+description: Something in Aloha isn't working
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Aloha! The fastest path is the in-app
+        **Report a problem** button — it attaches a secrets-free diagnostics
+        bundle automatically. Otherwise, fill this out.
+
+        Please skim [docs/TROUBLESHOOTING.md](https://github.com/sackio/aloha/blob/main/docs/TROUBLESHOOTING.md) first.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you ask Aloha to do, what did you expect, and what happened instead?
+      placeholder: "I asked Aloha to create a bedtime routine and…"
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the chat
+        2. Ask "…"
+        3. See …
+  - type: dropdown
+    id: install
+    attributes:
+      label: How is Aloha installed?
+      options:
+        - HAOS add-on
+        - Docker (bundled HA)
+        - Docker (standalone, my own HA)
+        - Aloha managed (relay)
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics bundle
+      description: >
+        Paste the output of
+        `curl -s http://your-host:7123/api/report/diagnostics`
+        (it is secrets-free by construction), or the bundle from the in-app
+        Report a problem button.
+      render: json
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked the troubleshooting guide.
+          required: true
+        - label: The diagnostics/log I'm pasting doesn't contain any secret I care about.
+          required: true

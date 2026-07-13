@@ -14,3 +14,6 @@ python-multipart>=0.0.9
 aiofiles>=23.2.1
 pydantic>=2.7.0
 pydantic-settings>=2.3.0
+# Opt-in error reporting only — inert (zero network calls) unless the operator
+# sets error_reporting_dsn. See aloha/telemetry.py.
+sentry-sdk>=2.0.0
